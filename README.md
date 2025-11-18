@@ -13,6 +13,22 @@
 - **System Control Functions** (open programs, search files, reminders, web)
 - **Modular architecture**: plugins can be developed and loaded independently
 
+## Architecture
++-------------------------------------------------------+
+|                 Local AI Assistant (Core)             |
+|                                                       |
+|   +------------------+     +-----------------------+  |
+|   |  NLP/LLM Engine  | <-- |  Capability Registry  |  |
+|   +------------------+     +-----------------------+  |
+|             | (intent/function)           |           |
+|             v                             v           |
+|   +------------------+     +-----------------------+  |
+|   | Plugin Manager   | --> |  Loaded Plugins (DLL) |  |
+|   +------------------+     +-----------------------+  |
+|            | loads DLLs and dispatches calls          |
++-------------------------------------------------------+
+
+
 ## Plugin Design
 
 Each plugin (DLL) registers its capabilities with the assistant system:
