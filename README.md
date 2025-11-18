@@ -14,20 +14,7 @@
 - **Modular architecture**: plugins can be developed and loaded independently
 
 ## Architecture
-+-------------------------------------------------------+
-|                 Local AI Assistant (Core)             |
-|                                                       |
-|   +------------------+     +-----------------------+  |
-|   |  NLP/LLM Engine  | <-- |  Capability Registry  |  |
-|   +------------------+     +-----------------------+  |
-|             | (intent/function)           |           |
-|             v                             v           |
-|   +------------------+     +-----------------------+  |
-|   | Plugin Manager   | --> |  Loaded Plugins (DLL) |  |
-|   +------------------+     +-----------------------+  |
-|            | loads DLLs and dispatches calls          |
-+-------------------------------------------------------+
-
+<img width="1024" height="1536" alt="localAI-Assistant-Architecture" src="https://github.com/user-attachments/assets/1dfa1155-105f-407e-b9d8-401da4cb1fdc" />
 
 ## Plugin Design
 
