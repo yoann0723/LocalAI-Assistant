@@ -1,0 +1,81 @@
+# -------------------------------
+# CMake build files
+# -------------------------------
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+CMakeScripts/
+CMakeError.log
+CMakeOutput.log
+CTestTestfile.cmake
+install_manifest.txt
+
+# Build directories
+build/
+bin/
+lib/
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.exe
+*.out
+*.app
+*.dSYM/
+
+# -------------------------------
+# Qt auto-generated files
+# -------------------------------
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+*.moc
+*.qrc
+*.qmlc
+*.qmltypes
+*.pro.user
+*.autosave
+*.user
+
+# Qt Creator project files (optional)
+*.creator
+*.creator.user
+*.userprefs
+
+# -------------------------------
+# Editor/IDE temporary files
+# -------------------------------
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+*.log
+
+# Visual Studio temporary files (if used)
+*.VC.db
+*.VC.opendb
+*.sdf
+*.ipch
+*.pdb
+*.filters
+*.vcxproj.user
+*.ncb
+
+# macOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+desktop.ini
+
+# -------------------------------
+# Others
+# -------------------------------
+# Ignore Qt Creator build configuration directories
+*.build/
+
+# Ignore all auto-generated documentation files
+doc/html/
