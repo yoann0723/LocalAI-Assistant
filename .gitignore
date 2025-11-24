@@ -64,6 +64,9 @@ qrc_*.cpp
 *.vcxproj.user
 *.ncb
 
+# Visual Studio Code temporary files (if used)
+.vscode/
+
 # macOS system files
 .DS_Store
 
@@ -79,3 +82,7 @@ desktop.ini
 
 # Ignore all auto-generated documentation files
 doc/html/
+
+# ignore model files except README.md
+models/*
+!models/README.md

@@ -1,0 +1,13 @@
+{
+  "name": "simple_plugin",
+  "version": "1.0.0",
+  "platforms": [
+    "windows"
+  ],
+  "description": "A plugin that can open files on Windows.",
+  "author": "Yoann",
+  "capabilities": [
+    "open_file"
+  ],
+  "entry": "simple_plugin.dll"
+}

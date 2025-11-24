@@ -15,6 +15,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+	void on_btn_send_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
