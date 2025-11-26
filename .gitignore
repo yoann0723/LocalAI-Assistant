@@ -86,3 +86,10 @@ doc/html/
 # ignore model files except README.md
 models/*
 !models/README.md
+
+# ignore model inference libraries
+src/inference-engine/llama/*
+!src/inference-engine/llama/.keep
+
+src/inference-engine/onnxruntime/*
+!src/inference-engine/onnxruntime/.keep

@@ -1,13 +1,163 @@
 {
-  "name": "simple_plugin",
-  "version": "1.0.0",
-  "platforms": [
-    "windows"
-  ],
-  "description": "A plugin that can open files on Windows.",
-  "author": "Yoann",
-  "capabilities": [
-    "open_file"
-  ],
-  "entry": "simple_plugin.dll"
+    "id": "com.yoann.simple_plugin",
+    "version": "1.0.0",
+    "platforms": [
+        "windows"
+    ],
+    "description": "A plugin that can open files on Windows.",
+    "author": "Yoann",
+    "entry": "simple_plugin",
+    "capabilities": [
+        {
+            "name": "filesystem.create_directory",
+            "description": "Create a new directory at the specified path",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "filesystem.create_file",
+            "description": "Create a new file at the specified path",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "filesystem.write_file",
+            "description": "Write content to a file at the specified path",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "content",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "filesystem.delete_file",
+            "description": "Delete a file at the specified path",
+            "parameters": [
+                {
+                    "name": "path",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "filesystem.rename_file",
+            "description": "Rename a file from old path to new path",
+            "parameters": [
+                {
+                    "name": "old_path",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "new_path",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "filesystem.move_file",
+            "description": "Move a file from source path to destination path",
+            "parameters": [
+                {
+                    "name": "source_path",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "destination_path",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "filesystem.move_directory",
+            "description": "Move a directory from source path to destination path",
+            "parameters": [
+                {
+                    "name": "source_path",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "destination_path",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "filesystem.search_files",
+            "description": "Search for files in a directory matching a given pattern",
+            "parameters": [
+                {
+                    "name": "directory_path",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "pattern",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        }
+    ],
+    "intents": [
+        {
+            "intent_name": "create_project",
+            "description": "Create a project folder and main file",
+            "actions": [
+                {
+                    "name": "filesystem.create_directory"
+                },
+                {
+                    "name": "filesystem.create_file"
+                },
+                {
+                    "name": "filesystem.write_file"
+                }
+            ]
+        },
+        {
+            "intent_name": "move_file",
+            "description": "Move a file from one location to another",
+            "actions": [
+                {
+                    "name": "filesystem.move_file"
+                }
+            ]
+        },
+        {
+            "intent_name": "clear_temp_files",
+            "description": "Delete all temporary files in a specified directory",
+            "actions": [
+                {
+                    "name": "filesystem.search_files"
+                },
+                {
+                    "name": "filesystem.delete_file"
+                }
+            ]
+        }
+    ]
 }

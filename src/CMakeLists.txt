@@ -36,7 +36,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UP} ${OUTPUT_BIN_DIR}/${CMAKE_BUILD_
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONFIG_UP} ${OUTPUT_LIB_DIR}/${CMAKE_BUILD_TYPE})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_UP} ${OUTPUT_LIB_DIR}/${CMAKE_BUILD_TYPE})
 
-# Make sure to add core first
+add_subdirectory(model-provider)
 add_subdirectory(core)
 add_subdirectory(frontend)
 add_subdirectory(plugins/simple_plugin)
