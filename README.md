@@ -9,7 +9,6 @@
   - Open applications
   - Search files
   - Set reminders
-- **Local TTS (optional)**
 - **System Control Functions** (open programs, search files, reminders, web)
 - **Modular architecture**: plugins can be developed and loaded independently
 
