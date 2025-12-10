@@ -1,28 +1,27 @@
 #pragma once
-#include <IModelProvider.h>
-#include "CommonDef.h"
+#include "IModelProvider.h"
+#include "core_common.h"
+#include "core_export.h"
+#include "core_c_api.h"
 #include <memory>
 #include <mutex>
 
 // Simple model hub that owns a concrete IModelProvider instance.
-class CORE_API AIModelHub {
+class AIModelHub {
+
+	using ModelMap = std::unordered_map<std::string, std::shared_ptr<LocalAI_Model_t>>;
 public:
-    static AIModelHub& instance();
+	static AIModelHub& instance();
 
-    // initialize with a concrete provider (calls should be thread-safe)
-    void setTextModelProvider(std::shared_ptr<ILLMProvider> provider);
-    std::shared_ptr<ILLMProvider> textModelProvider();
+	Status_Internal initializeModel(const char *model_id, const char* model_path, const Model_Params& option);
+	Status_Internal updateModelParams(const char* model_id, const Model_Params& option);
 
-	void setEmbeddingModelProvider(std::shared_ptr<IEmbeddingProvider> provider);
-	std::shared_ptr<IEmbeddingProvider> embeddingModelProvider();
-
-	void setVisionModelProvider(std::shared_ptr<IVisionProvider> provider);
-	std::shared_ptr<IVisionProvider> visionModelProvider();
+	LocalAI_ModelInfo_t getModelInfo(const char* model_id);
+	bool getModelParams(const char *model_id, Model_Params &params);
+	std::vector<std::string> supportedModels() const;
 
 private:
-    AIModelHub() = default;
-    std::mutex mtx_;
-    std::shared_ptr<ILLMProvider> textProvider_;
-	std::shared_ptr<IEmbeddingProvider> embeddingProvider_;
-	std::shared_ptr<IVisionProvider> visionProvider_;
+	AIModelHub();
+    std::mutex mtx_params_;
+	std::unordered_map<std::string, std::shared_ptr<LocalAI_Model_t>> models_;
 };

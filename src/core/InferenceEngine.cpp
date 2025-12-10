@@ -1,58 +1,48 @@
 #include "InferenceEngine.h"
+#include "IModelProvider.h"
 
-InferenceEngine::InferenceEngine() {
-    workerThread = std::thread(&InferenceEngine::workerThreadFunc, this);
+constexpr const size_t max_token_size = 768;
+
+InferenceEngine::InferenceEngine(int llm_n_threads, int emb_n_threads, int vision_n_threads)
+	:llm_pool_(llm_n_threads),
+	emb_pool_(emb_n_threads),
+	vision_pool_(vision_n_threads)
+{
 }
 
 InferenceEngine::~InferenceEngine() {
-    {
-        std::lock_guard<std::mutex> lock(queueMutex);
-        stopWorker = true;
-    }
-    conditionVar.notify_all();
-    if (workerThread.joinable()) {
-        workerThread.join();
-    }
+	stop();
 }
 
-void InferenceEngine::submitLLM(const std::string& prompt, std::promise<std::string> resultPromise) {
-    {
-        std::lock_guard<std::mutex> lock(queueMutex);
-		auto promise_ptr = std::make_shared<std::promise<std::string>>(std::move(resultPromise));
-        taskQueue.push([prompt, promise = promise_ptr]() mutable {
-            // Simulate LLM inference (replace with actual model call)
-            std::string result = "LLM response for prompt: " + prompt;
-            promise->set_value(result);
-        });
-    }
-    conditionVar.notify_one();
+std::future<InferenceResult<std::string>> InferenceEngine::submitLLM(const std::string& prompt)
+{
+	llm_pool_.submit([prompt](std::string_view prompt) {
+		
+		}, prompt);
+	return std::future<InferenceResult<std::string>>();
 }
 
-void InferenceEngine::submitEmbedding(const std::string& text, std::promise<std::vector<float>> resultPromise) {
-    {
-        std::lock_guard<std::mutex> lock(queueMutex);
-		auto promise_ptr = std::make_shared<std::promise<std::vector<float>>>(std::move(resultPromise));
-        taskQueue.push([text, promise = promise_ptr]() mutable {
-            // Simulate embedding generation (replace with actual model call)
-            std::vector<float> embedding = {0.1f, 0.2f, 0.3f}; // Dummy embedding
-            promise->set_value(embedding);
-        });
-    }
-    conditionVar.notify_one();
+std::future<InferenceResult<std::string>> InferenceEngine::submitASR(std::span<const float> samples)
+{
+	return std::future<InferenceResult<std::string>>();
 }
 
-void InferenceEngine::workerThreadFunc() {
-    while (true) {
-        std::function<void()> task;
-        {
-            std::unique_lock<std::mutex> lock(queueMutex);
-            conditionVar.wait(lock, [this]() { return !taskQueue.empty() || stopWorker; });
-            if (stopWorker && taskQueue.empty()) {
-                return;
-            }
-            task = std::move(taskQueue.front());
-            taskQueue.pop();
-        }
-        task();
-    }
+std::future<InferenceResult<std::span<const float>>> InferenceEngine::submitEmbedding(const std::string& text)
+{
+	return std::future<InferenceResult<std::span<const float>>>();
+}
+
+std::future<InferenceResult<std::string>> InferenceEngine::submitVision(const ModelProvider::ImageView& image)
+{
+	return std::future<InferenceResult<std::string>>();
+}
+
+void InferenceEngine::start() {
+	
+}
+
+void InferenceEngine::stop() {
+	llm_pool_.stop();
+	emb_pool_.stop();
+	vision_pool_.stop();
 }

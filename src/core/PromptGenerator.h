@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 struct Message {
     std::string role;    // "system" / "user" / "assistant"

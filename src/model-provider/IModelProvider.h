@@ -2,60 +2,69 @@
 #include <future>
 #include <string>
 #include <vector>
-#include "model_provider_export.h"
+#include <span>
+#include <string_view>
+#include <expected.hpp>
+#include "../core/core_c_api.h"
+//#include "model_provider_export.h"
 
-struct ImageData {
-    std::string format; // e.g., "png", "jpeg"
-    std::vector<unsigned char> data; // raw image data
-};
+namespace ModelProvider {
 
-struct ImageInfo
-{
-    std::string description;
-};
+	template<typename T>
+	using Result = tl::expected<T, LocalAI_ErrorCode>;
 
-struct AudioData
-{
-	std::vector<float> samples;
-	int sampleRate;
-	int channels;
-};
+	class ModelProviderBase {
+	public:
+		virtual ~ModelProviderBase() = default;
 
-struct InferenceResult {
-    bool ok = true;
-    std::string text; // for LLM generate
-    std::vector<float> embedding; // for embed
-};
+		virtual Result<void> initialize(std::string_view model_path, Model_Params params) { return {}; };
+		virtual Result<void> updateParams(Model_Params params) { return {}; };
+		virtual std::string name() { return ""; };
+		virtual void unInitialize() {};
+	};
 
-class ILLMProvider {
-public:
-    virtual ~ILLMProvider() = default;
-    // Asynchronous calls returning futures
-    virtual std::future<InferenceResult> generateLLM(const std::string& prompt) = 0;
-};
+	class ILLMProvider: public ModelProviderBase {
+	public:
+		virtual ~ILLMProvider() = default;
+		virtual Result<std::string> generate(std::string_view prompt, size_t max_len) { 
+			return std::string(); 
+		};
+	};
 
-class IEmbeddingProvider {
-    public:
-    virtual ~IEmbeddingProvider() = default;
-    // Asynchronous call returning future
-    virtual std::future<InferenceResult> embedText(const std::string& text) = 0;
-};
+	class IEmbeddingProvider: public ModelProviderBase {
+	public:
+		virtual ~IEmbeddingProvider() = default;
+		virtual Result<std::vector<float>> embedText(std::string_view text) {
+			return std::vector<float>();
+		};
+	};
 
-class IVisionProvider {
-    public:
-    virtual ~IVisionProvider() = default;
-    // Asynchronous call returning future
-    virtual std::future<ImageInfo> visionInfer(const ImageData& img) = 0;
-};
+	struct ImageView {
+		std::span<const uint8_t> data;
+		int width;
+		int height;
+		int channels;
+		std::string_view format;
+	};
 
-class ISTTProvider {
-    public:
-    virtual ~ISTTProvider() = default;
-    // Asynchronous call returning future
-    virtual std::future<std::string> speechToText(const AudioData& audioData) = 0;
-};
+	class IVisionProvider: public ModelProviderBase {
+	public:
+		virtual ~IVisionProvider() = default;
+		virtual Result<std::string> visionInfer(const ImageView& image) {
+			return std::string();
+		};
+	};
 
-MODEL_PROVIDER_API std::shared_ptr<ILLMProvider> createLLMProvider();
-MODEL_PROVIDER_API std::shared_ptr<IEmbeddingProvider> createEmbeddingProvider();
-MODEL_PROVIDER_API std::shared_ptr<ISTTProvider> createSTTProvider();
-MODEL_PROVIDER_API std::shared_ptr<IVisionProvider> createVisionProvider();
+	class IASRProvider: public ModelProviderBase {
+	public:
+		virtual ~IASRProvider() = default;
+		virtual Result<std::string> transcribe(std::span<const float> samples) {
+			return std::string();
+		};
+	};
+
+    std::unique_ptr<ModelProviderBase> createLLMProvider();
+    std::unique_ptr<ModelProviderBase> createEmbeddingProvider();
+    std::unique_ptr<ModelProviderBase> createASRProvider();
+    std::unique_ptr<ModelProviderBase> createVisionProvider();
+}

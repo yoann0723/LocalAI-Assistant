@@ -29,6 +29,18 @@
      <item>
       <widget class="QWidget" name="widget_input" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item>
          <widget class="QTextEdit" name="textEdit_input">
           <property name="sizePolicy">
@@ -43,15 +55,86 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_send">
+         <widget class="QPushButton" name="btn_file">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="minimumSize">
+           <size>
+            <width>80</width>
+            <height>80</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>80</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>File</string>
+          </property>
+          <property name="icon">
+           <iconset theme="QIcon::ThemeIcon::DocumentNew"/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_send_txt">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>80</width>
+            <height>80</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>80</height>
+           </size>
+          </property>
           <property name="text">
            <string>Send</string>
+          </property>
+          <property name="icon">
+           <iconset theme="QIcon::ThemeIcon::DocumentSend"/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_speech">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>80</width>
+            <height>80</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>80</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Speech</string>
+          </property>
+          <property name="icon">
+           <iconset theme="QIcon::ThemeIcon::AudioInputMicrophone"/>
           </property>
          </widget>
         </item>

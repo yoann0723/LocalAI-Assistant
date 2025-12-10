@@ -1,6 +1,6 @@
 #include "LLMEngine.h"
 #include "AIModelHub.h"
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 LLMEngine::LLMEngine(std::string apiKey)
     : apiKey_(std::move(apiKey)) {}

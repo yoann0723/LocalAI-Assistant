@@ -19,6 +19,7 @@ parser.add_argument('--target', default=None, help="Specify CMake target")
 parser.add_argument('--preset', default=None, help="CMake preset to use")
 parser.add_argument('--clean', action='store_true', help="Clean build directory before building")
 parser.add_argument('--run', action='store_true', help="Run the main frontend executable after build")
+parser.add_argument('--capture_sdl2', default='true', help="Enable SDL2 support (true/false)")
 args = parser.parse_args()
 
 BUILD_DIR = args.build_dir
@@ -30,6 +31,7 @@ RUN = args.run
 SOURCE_DIR = r"./src"
 QTDIR = args.qt_dir or os.getenv("QT6_DIR", "")
 ENABLE_UI = args.enable_ui.lower() == 'true'
+CAPTURE_SDL2 = args.capture_sdl2.lower() == 'true'
 
 # ---------------------------
 # Paths
@@ -55,7 +57,9 @@ def cmake_configure(source_dir="."):
            "-DSOURCE_DIR=" + os.path.abspath(source_dir),
            "-DBIN_DIR=" + os.path.abspath(BIN_DIR),
            "-DDEV_OUTPUT_DIR=" + os.path.join(BIN_DIR, CONFIG),
-           "-DENABLE_UI=" + ("ON" if ENABLE_UI else "OFF")]
+           "-DENABLE_UI=" + ("ON" if ENABLE_UI else "OFF"),
+           "-DCAPTURE_SDL2=" + ("ON" if CAPTURE_SDL2 else "OFF")
+           ]
     if PRESET:
         cmd += ["--preset", PRESET]
     else:

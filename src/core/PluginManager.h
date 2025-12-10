@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include "CommonDef.h"
+#include "core_common.h"
 #include "LLMEngine.h"
 
 class PluginManager {

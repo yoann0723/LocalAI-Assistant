@@ -17,7 +17,7 @@ bool PluginManager::loadPlugin(const LAACHAR_T* path) {
 #ifdef _WIN32
     HMODULE h = LoadLibraryW(path);
     if (!h) {
-        std::cerr << "LoadLibrary failed: " << path << std::endl;
+        // std::cerr << "LoadLibrary failed: " << path << std::endl;
         return false;
     }
     auto create = (CreatePluginFn)GetProcAddress(h, "CreatePlugin");
@@ -32,7 +32,7 @@ bool PluginManager::loadPlugin(const LAACHAR_T* path) {
     auto destroy = (DestroyPluginFn)dlsym(h, "DestroyPlugin");
 #endif
     if (!create || !destroy) {
-        std::cerr << "Plugin factory functions not found: " << path << std::endl;
+        // std::cerr << "Plugin factory functions not found: " << path << std::endl;
 #ifdef _WIN32
         FreeLibrary(h);
 #else
@@ -43,7 +43,7 @@ bool PluginManager::loadPlugin(const LAACHAR_T* path) {
 
     IPlugin* plugin = create();
     if (!plugin) {
-        std::cerr << "CreatePlugin returned null: " << path << std::endl;
+        // std::cerr << "CreatePlugin returned null: " << path << std::endl;
 #ifdef _WIN32
         FreeLibrary(h);
 #else

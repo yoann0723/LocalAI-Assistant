@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 
 // Minimal plugin interface used by PluginManager.
 // Plugins should expose C factory functions (see example plugin).

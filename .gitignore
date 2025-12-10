@@ -87,9 +87,18 @@ doc/html/
 models/*
 !models/README.md
 
-# ignore model inference libraries
-src/inference-engine/llama/*
-!src/inference-engine/llama/.keep
+# ignore deps libraries
+src/deps/llama.cpp/*
+!src/deps/llama.cpp/.keep
 
-src/inference-engine/onnxruntime/*
-!src/inference-engine/onnxruntime/.keep
+src/deps/ggml/*
+!src/deps/ggml/.keep
+
+src/deps/onnxruntime/*
+!src/deps/onnxruntime/.keep
+
+src/deps/SDL2/*
+!src/deps/SDL2/.keep
+
+src/deps/whisper.cpp/*
+!src/deps/whisper.cpp/.keep

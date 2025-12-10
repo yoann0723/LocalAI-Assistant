@@ -1,25 +1,27 @@
 #include "IModelProvider.h"
 #include "./LLM/LLMProviderLlama.h"
-#include "./STT/STTProviderWhisper.h"
+#include "./ASR/ASRProviderWhisper.h"
 #include "./vision/VisionProvider.h"
 #include "./embedding/EmbeddingProviderSbert.h"
 
-MODEL_PROVIDER_API std::shared_ptr<ILLMProvider> createLLMProvider()
-{
-    return std::make_shared<LLMProviderLlama>();
-}
+namespace ModelProvider {
+    std::unique_ptr<ModelProviderBase> createLLMProvider()
+    {
+        return std::make_unique<LLMProviderLlama>();
+    }
 
-MODEL_PROVIDER_API std::shared_ptr<IEmbeddingProvider> createEmbeddingProvider()
-{
-    return std::make_shared<EmbeddingProviderSbert>();
-}
+    std::unique_ptr<ModelProviderBase> createEmbeddingProvider()
+    {
+        return std::make_unique<EmbeddingProviderSbert>();
+    }
 
-MODEL_PROVIDER_API std::shared_ptr<ISTTProvider> createSTTProvider()
-{
-    return std::make_shared<STTProviderWhisper>();
-}
+    std::unique_ptr<ModelProviderBase> createASRProvider()
+    {
+        return std::make_unique<ASRProviderWhisper>();
+    }
 
-MODEL_PROVIDER_API std::shared_ptr<IVisionProvider> createVisionProvider()
-{
-    return std::make_shared<VisionProvider>();
+    std::unique_ptr<ModelProviderBase> createVisionProvider()
+    {
+        return std::make_unique<VisionProvider>();
+    }
 }

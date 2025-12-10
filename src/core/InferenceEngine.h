@@ -11,6 +11,21 @@
 #include <queue>
 #include <functional>
 #include <mutex>
+#include <memory>
+
+#include "core_common.h"
+#include "core_export.h"
+#include "AIModelHub.h"
+#include "IModelProvider.h"
+#include "ThreadPool.h"
+
+template<class T>
+struct InferenceResult{
+    bool ok;
+    LocalAI_ErrorCode code; 
+    std::string msg;
+    T payload;
+};
 
 /**
  * InferenceEngine class manages asynchronous inference tasks
@@ -18,18 +33,23 @@
  */
 class InferenceEngine {
 public:
-    InferenceEngine();
+    InferenceEngine(
+        int llm_n_threads = DEFAULT_N_LLM_THREAD,
+        int emb_n_threads = DEFAULT_N_EMBEDDING_THREAD, 
+        int vision_n_threads = DEFAULT_N_VISION_THREAD
+    );
     ~InferenceEngine();
 
-    void submitLLM(const std::string& prompt, std::promise<std::string> resultPromise);
-    void submitEmbedding(const std::string& text, std::promise<std::vector<float>> resultPromise);
+    std::future<InferenceResult<std::string>> submitLLM(const std::string &prompt);
+    std::future<InferenceResult<std::string>> submitASR(std::span<const float> samples);
+    std::future<InferenceResult<std::span<const float>>> submitEmbedding(const std::string& text);
+    std::future<InferenceResult<std::string>> submitVision(const ModelProvider::ImageView &image);
+
+    void start();
+    void stop();
 
 private:
-    void workerThreadFunc();
-
-    std::thread workerThread;
-    std::queue<std::function<void()>> taskQueue;
-    std::mutex queueMutex;
-    std::condition_variable conditionVar;
-    bool stopWorker = false;
+    ThreadPool llm_pool_;
+    ThreadPool emb_pool_;
+    ThreadPool vision_pool_;
 };

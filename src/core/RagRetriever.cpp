@@ -31,7 +31,7 @@ std::vector<CapabilityInfo> RagRetriever::retrieve(const std::string& query) {
 }
 
 std::vector<float> RagRetriever::embed(const std::string& text) {
-    auto embeddingProvider = AIModelHub::instance().embeddingModelProvider();
+    auto embeddingProvider = AIModelHub::instance().embeddingModel();
     auto futureResult = embeddingProvider->embedText(text);
     auto inferenceResult = futureResult.get();
     if (!inferenceResult.ok) {
