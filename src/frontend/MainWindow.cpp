@@ -1,6 +1,5 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-#include "InferenceEngine.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)

@@ -1,7 +1,6 @@
 #pragma once
-
-#include "AIModelHub.h"
-#include <IPlugin.h>
+#include "localai_c_api.h"
+#include "IPlugin.h"
 #include <iostream>
 
 extern "C" IPlugin* CreatePlugin();

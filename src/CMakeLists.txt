@@ -43,9 +43,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONFIG_UP} ${OUTPUT_LIB_DIR}/${CMAKE_BUILD_
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_UP} ${OUTPUT_LIB_DIR}/${CMAKE_BUILD_TYPE})
 
 add_subdirectory(capture)
-add_subdirectory(inference-provider)
-add_subdirectory(model-provider)
-add_subdirectory(core)
+add_subdirectory(backend)
+# add_subdirectory(inference-provider)
+# add_subdirectory(model-provider)
+# add_subdirectory(core)
 add_subdirectory(frontend)
 add_subdirectory(plugins/simple_plugin)
 

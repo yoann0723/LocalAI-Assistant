@@ -88,17 +88,17 @@ models/*
 !models/README.md
 
 # ignore deps libraries
-src/deps/llama.cpp/*
-!src/deps/llama.cpp/.keep
+src/backend/deps/llama.cpp/*
+!src/backend/deps/llama.cpp/.keep
 
-src/deps/ggml/*
-!src/deps/ggml/.keep
+src/backend/deps/ggml/*
+!src/backend/deps/ggml/.keep
 
-src/deps/onnxruntime/*
-!src/deps/onnxruntime/.keep
+src/backend/deps/onnxruntime/*
+!src/backend/deps/onnxruntime/.keep
 
-src/deps/SDL2/*
-!src/deps/SDL2/.keep
+src/backend/deps/SDL2/*
+!src/backend/deps/SDL2/.keep
 
-src/deps/whisper.cpp/*
-!src/deps/whisper.cpp/.keep
+src/backend/deps/whisper.cpp/*
+!src/backend/deps/whisper.cpp/.keep

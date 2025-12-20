@@ -6,4 +6,7 @@ set(SIMPLE_PLUGIN_SOURCES
 
 add_library(simple_plugin SHARED ${SIMPLE_PLUGIN_SOURCES})
 
-target_link_libraries(simple_plugin PRIVATE nlohmann_json core)
+# Include localai headers
+target_include_directories(simple_plugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
+
+target_link_libraries(simple_plugin PRIVATE nlohmann_json localai)

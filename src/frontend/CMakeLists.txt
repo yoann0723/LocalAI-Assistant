@@ -22,7 +22,7 @@ if(UI_QML)
         QML_FILES
             qml/Main.qml
     )
-    target_link_libraries(ai-assistant PRIVATE Qt6::Quick capture core nlohmann_json)
+    target_link_libraries(ai-assistant PRIVATE Qt6::Quick capture localai nlohmann_json)
 else()
     set(FRONTEND_SOURCES
         app.cpp
@@ -31,13 +31,16 @@ else()
         mainwindow.ui
     )
     add_executable(ai-assistant ${FRONTEND_SOURCES})
-    target_link_libraries(ai-assistant PRIVATE Qt6::Widgets capture core nlohmann_json)
+    target_link_libraries(ai-assistant PRIVATE Qt6::Widgets capture localai nlohmann_json)
 endif()
 
 # Make the application a Windows GUI app (no console) on Windows
 if(OS_WINDOWS)
   set_target_properties(ai-assistant PROPERTIES WIN32_EXECUTABLE ON OUTPUT_NAME ai-assistant)
 endif()
+
+# Include localai headers
+target_include_directories(ai-assistant PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 deploy_qt(ai-assistant)
 
