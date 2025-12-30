@@ -23,7 +23,7 @@ public:
 
 	void unInitialize() override;
 
-	Status embedText(std::string_view text, LocalAI_EmbeddingResult *out) const;
+	Status embedText(std::string_view text, LocalAI_EmbeddingResult* out) const;
 
 private:
 	std::unique_ptr<ILLMInferProvider> engine_;

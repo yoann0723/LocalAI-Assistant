@@ -21,6 +21,7 @@ set(ONNX_DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../deps/onnxruntime)
 target_link_libraries(inference_provider 
 	PRIVATE
 	tl
+	localai_api
 	# Whisper.cpp library
 	${CMAKE_CURRENT_SOURCE_DIR}/../deps/whisper.cpp/lib/whisper.lib
 

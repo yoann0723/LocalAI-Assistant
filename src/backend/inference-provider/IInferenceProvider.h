@@ -1,7 +1,7 @@
 #pragma once
-#include "../core/localai_c_api.h"
+#include "localai_c_api.h"
 #include "../core/core_common.h"
-#include "../common/common.h"
+#include "../common/common.hpp"
 #include "IInferenceProvider.h"
 #include <span>
 
@@ -52,7 +52,7 @@ public:
         const Model_Params& params) = 0;
 
     virtual Status generate(
-        std::string_view prompt, std::string &out) = 0;
+        std::string_view prompt, LLMOutput** output) = 0;
 };
 
 class IASRInferProvider {

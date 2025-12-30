@@ -1,4 +1,5 @@
 #include "LlamaInferenceProvider.h"
+#include "../common/common.hpp"
 #include <assert.h>
 
 constexpr const int ngl = 99;
@@ -10,6 +11,9 @@ LlamaInferenceProvider::LlamaInferenceProvider()
 
 LlamaInferenceProvider::~LlamaInferenceProvider()
 {
+	for (auto& msg : messages_) {
+		free(const_cast<char*>(msg.content));
+	}
 }
 
 Status LlamaInferenceProvider::initialize(
@@ -64,6 +68,8 @@ Status LlamaInferenceProvider::initialize(
 	llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.8f));
 	llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 
+	formatted_.resize(llama_n_ctx(ctx));
+
 	model_.reset(model);
 	ctx_.reset(ctx);
 	smpl_.reset(smpl);
@@ -76,9 +82,29 @@ Status LlamaInferenceProvider::updateParams(const Model_Params& params)
 	return {};
 }
 
-Status LlamaInferenceProvider::generate(std::string_view prompt, std::string &response)
+Status LlamaInferenceProvider::generate(std::string_view user, LLMOutput** output)
 {
-	response = "";
+	if (!output)
+		return { LOCALAI_INVALID_ARG, "The response pointer is null" };
+
+	const char* tmpl = llama_model_chat_template(model_.get(), /* name */ nullptr);
+
+	// add the user input to the message list and format it
+	messages_.push_back({ "user", strdup(user.data()) });
+	int new_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), true, formatted_.data(), formatted_.size());
+	if (new_len > (int)formatted_.size()) {
+		formatted_.resize(new_len);
+		new_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), true, formatted_.data(), formatted_.size());
+	}
+	if (new_len < 0) {
+		fprintf(stderr, "failed to apply the chat template\n");
+		return { LOCALAI_MODEL_GENERATE_ERROR, "failed to apply the chat template"};
+	}
+
+	// remove previous messages to obtain the prompt to generate the response
+	std::string prompt(formatted_.begin() + prev_len, formatted_.begin() + new_len);
+
+	auto response = std::make_unique<LLMOutput>();
 
 	const llama_vocab* vocab = llama_model_get_vocab(model_.get());
 	const bool is_first = llama_memory_seq_pos_max(llama_get_memory(ctx_.get()), 0) == -1;
@@ -97,6 +123,10 @@ Status LlamaInferenceProvider::generate(std::string_view prompt, std::string &re
 	// prepare a batch for the prompt
 	llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
 	llama_token new_token_id;
+
+	// using string internal cache, 15 bytes + '\n'
+	response->text.resize(response->text.capacity());
+
 	while (true) {
 		// check if we have enough space in the context to evaluate this batch
 		int n_ctx = llama_n_ctx(ctx_.get());
@@ -124,25 +154,53 @@ Status LlamaInferenceProvider::generate(std::string_view prompt, std::string &re
 		}
 
 		// convert the token to a string, print it and add it to the response
-		char buf[256];
-		int n = llama_token_to_piece(vocab, new_token_id, buf, sizeof(buf), 0, true);
+		// char buf[256];
+		//int n = llama_token_to_piece(vocab, new_token_id, buf, sizeof(buf), 0, true);
+		int n = llama_token_to_piece(vocab, new_token_id, 
+			response->text.data() + response->piece_count, 
+			response->text.size() - response->piece_count, 0, true);
 		if (n < 0) {
-			fprintf(stderr, "failed to convert token to piece\n");
-			return {
-				LOCALAI_MODEL_GENERATE_ERROR,
-				"llama_token_to_piece: failed to convert token to piece"
-			};
+			response->text.resize(response->piece_count + (-n));
+			int check = llama_token_to_piece(vocab, new_token_id,
+				response->text.data() + response->piece_count,
+				response->text.size() - response->piece_count, 0, true);
+			GGML_ASSERT(check == -n);
+			if (check != -n) {
+				fprintf(stderr, "token_to_piece: inconsistent result\n");
+				return {
+					LOCALAI_MODEL_GENERATE_ERROR,
+					"llama_token_to_piece: inconsistent result"
+				};
+			}
+			n = check;
 		}
-		std::string piece(buf, n);
+		else {
+			response->text.resize(response->piece_count + n);
+		}
+		// std::string piece(buf, n);
 #ifdef _DEBUG
 		printf("%s", piece.c_str());
 		fflush(stdout);
 #endif
-		response += piece;
+		// response += piece;
+		response->piece_count += n;
 
 		// prepare the next batch with the sampled token
 		batch = llama_batch_get_one(&new_token_id, 1);
 	}
 
+	response->text.resize(response->piece_count + 1);
+	response->text[response->piece_count] = '\0';
+	response->text.shrink_to_fit();
+
+	// add the response to the messages
+	messages_.push_back({ "assistant", strdup(response->text.c_str()) });
+	prev_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), false, nullptr, 0);
+	if (prev_len < 0) {
+		fprintf(stderr, "failed to apply the chat template\n");
+		return { LOCALAI_MODEL_GENERATE_ERROR, "failed to apply the chat template" };
+	}
+
+	*output = response.release();
 	return {};
 }

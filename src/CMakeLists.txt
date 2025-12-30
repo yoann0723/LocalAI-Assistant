@@ -15,6 +15,12 @@ target_include_directories(tl
     INTERFACE ${PROJECT_SOURCE_DIR}/vendor/tl
 )
 
+add_library(localai_api INTERFACE)
+target_include_directories(localai_api INTERFACE
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
 # Add a convienience function to deploy Qt libraries after building a target
 function(deploy_qt target)
   add_custom_command(TARGET ${target}

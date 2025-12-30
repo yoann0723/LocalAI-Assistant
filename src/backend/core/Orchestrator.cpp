@@ -11,8 +11,9 @@ Orchestrator::Orchestrator(
 
 void Orchestrator::handleUserInput(
     const std::string& userInput,
-    LLMResponseCallbackFn callback)
+    LocalAI_TextCallback callback)
 {
+#if 0
     conv_->addUserMessage(userInput);
 
     // 1. RAG: qurey capabilities
@@ -43,4 +44,5 @@ void Orchestrator::handleUserInput(
         conv_->addAssistantMessage(response);
         callback(response, {});
     });
+#endif
 }

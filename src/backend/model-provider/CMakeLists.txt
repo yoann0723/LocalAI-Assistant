@@ -30,7 +30,8 @@ target_link_libraries(model_provider
 	PRIVATE 
 	nlohmann_json
 	tl
-	inference_provider)
+	inference_provider
+	localai_api)
 
 # Make the core library's headers accessible to its users
 target_include_directories(model_provider PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

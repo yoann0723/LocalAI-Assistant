@@ -3,8 +3,7 @@
 #include <variant>
 #include <functional>
 #include <span>
-#include "../core/localai_c_api.h"
-
+#include "localai_c_api.h"
 
 struct Status {
     LocalAI_ErrorCode code = LocalAI_ErrorCode::LOCALAI_OK;
@@ -49,4 +48,30 @@ struct ImageView {
     int channels;
     std::string_view format;
 };
+
+struct LLMOutput {
+    std::string text;
+    int piece_count = 0;
+};
+
+struct EmbeddingOutput {
+    std::vector<float> embedding;
+};
+
+struct RagOutput {
+    std::vector<std::string> top_k;
+};
+
+struct PluginOutput {
+
+};
+
+namespace LocalAI {
+    inline LocalAI_Status* StatusConvert(Status status) {
+        if (status) {
+            return nullptr;
+        }
+        return LocalAI_CreateStatus(status.code, status.error.c_str());
+    }
+}
 

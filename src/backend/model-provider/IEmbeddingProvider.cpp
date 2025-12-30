@@ -32,7 +32,7 @@ void IEmbeddingProvider::unInitialize()
 {
 }
 
-Status IEmbeddingProvider::embedText(std::string_view text, LocalAI_EmbeddingResult *out) const
+Status IEmbeddingProvider::embedText(std::string_view text, LocalAI_EmbeddingResult* out) const
 {
 	if (text.empty()) {
 		printf("Invalid text input for embedding.\n");

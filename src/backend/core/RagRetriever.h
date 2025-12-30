@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include "AIModelHub.h"
+#include "IEmbeddingProvider.h"
 
 struct CapabilityInfo {
     std::string name;
@@ -12,7 +13,12 @@ struct CapabilityInfo {
 
 class RagRetriever {
 public:
-    RagRetriever(AIModelHub* model_hub, size_t topK = 5);
+    RagRetriever() = default;
+    RagRetriever(const IEmbeddingProvider* embProvider, size_t topK = 5);
+
+    void setEmbeddingProvider(const IEmbeddingProvider* embProvider);
+
+    void setTopK(size_t topk);
 
     void loadCapabilities(const std::vector<CapabilityInfo>& caps);
 
@@ -27,5 +33,5 @@ private:
 private:
     size_t topK_;
     std::vector<CapabilityInfo> capabilities_;
-    AIModelHub* model_hub_ = nullptr;
+    const IEmbeddingProvider* embProvider_ = nullptr;
 };

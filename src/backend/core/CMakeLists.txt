@@ -3,14 +3,14 @@ set(CORE_SOURCES
     PluginManager.h
 	core_export.h
 	core_common.h
-	localai_c_api.h
+	# localai_c_api.h
 	localai_c_api.cpp
-	localai_cxx_api.h
+	# localai_cxx_api.h
 	LocalAIContext.h
 	LocalAIContext.cpp
 	# LocalAI_ModelInfo.cpp
 	CoreStatus.cpp
-	IPlugin.h
+	# IPlugin.h
 	# InferenceEngine.h
 	# InferenceEngine.cpp
 	# IModelProvider.h
@@ -27,6 +27,8 @@ set(CORE_SOURCES
 	Orchestrator.cpp
 	PromptGenerator.h
 	PromptGenerator.cpp
+	Pipeline.h
+	Pipeline.cpp
 	# ThreadPool.h
 	# ThreadPool.cpp
 	# ModelBridge.h
@@ -43,6 +45,7 @@ target_link_libraries(localai
 	nlohmann_json
 	tl
 	model_provider
+	localai_api
 	# Whisper.cpp library
 	${CMAKE_CURRENT_SOURCE_DIR}/../deps/whisper.cpp/lib/whisper.lib
 

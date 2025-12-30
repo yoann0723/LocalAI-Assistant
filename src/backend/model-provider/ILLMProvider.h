@@ -2,8 +2,9 @@
 #include "IModelProvider.h"
 
 #include <functional>
+#include <optional>
 
-using LLMCallback = std::function<void(const std::string& result, const Status& status)>;
+using LLMCallback = std::function<void(const LLMOutput* result, const Status& status)>;
 class ILLMInferProvider;
 class ThreadPool;
 
@@ -27,9 +28,14 @@ public:
 
 	void unInitialize() override;
 
-	void generateAsync(
-		std::string_view prompt,
+	/*void generateAsync(
+		std::string_view prompt, std::optional<std::string_view> params,
 		size_t max_len, 
+		LocalAI_TextCallback callback, void *user_data) const;*/
+
+	void generateAsync(
+		std::string_view prompt, std::optional<std::string_view> params,
+		size_t max_len,
 		LLMCallback callback) const;
 
 private:

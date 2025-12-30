@@ -2,8 +2,18 @@
 #include "AIModelHub.h"
 #include "IEmbeddingProvider.h"
 
-RagRetriever::RagRetriever(AIModelHub* model_hubs, size_t topK)
-    :model_hub_(model_hubs), topK_(topK) {}
+RagRetriever::RagRetriever(const IEmbeddingProvider* embProvider, size_t topK)
+    :embProvider_(embProvider), topK_(topK) {}
+
+void RagRetriever::setEmbeddingProvider(const IEmbeddingProvider* embProvider)
+{
+    embProvider_ = embProvider;
+}
+
+void RagRetriever::setTopK(size_t topk)
+{
+    topK_ = topk;
+}
 
 void RagRetriever::loadCapabilities(const std::vector<CapabilityInfo>& caps) {
     capabilities_ = caps;
@@ -43,9 +53,10 @@ std::vector<CapabilityInfo> RagRetriever::retrieve(std::string_view query) {
 
 bool RagRetriever::embed(std::string_view text, LocalAI_EmbeddingResult* output)
 {
-    auto embeddingProvider = model_hub_->modelProvider<IEmbeddingProvider>(Model_Type::LOCALAI_MODEL_EMBEDDING);
-    auto status = embeddingProvider->embedText(text, output);
-    return status;
+    if (!embProvider_)
+        return false;
+
+    return embProvider_->embedText(text, output);
 }
 
 float RagRetriever::cosineSimilarity(std::span<const float> a,

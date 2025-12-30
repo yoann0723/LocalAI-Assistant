@@ -1,6 +1,7 @@
 #pragma once
 #include "../IInferenceProvider.h"
 #include "llama-cpp.h"
+#include "../common/common.h"
 #include <memory>
 
 struct llama_model;
@@ -18,11 +19,17 @@ public:
     Status updateParams(
         const Model_Params& params) override;
 
+    //Status generate(
+	//	std::string_view prompt, LocalAI_TextResult_t** output) override;
+
     Status generate(
-        std::string_view prompt, std::string &response) override;
+        std::string_view prompt, LLMOutput** output) override;
 
 private:
-    llama_model_ptr model_;
-    llama_context_ptr ctx_;
     llama_sampler_ptr smpl_;
+    llama_context_ptr ctx_;
+    llama_model_ptr model_;
+    std::vector<llama_chat_message> messages_;
+    std::vector<char> formatted_;
+    int prev_len = 0;
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/localai_c_api.h"
+#include "localai_c_api.h"
 
 #include <string>
 #include <memory>

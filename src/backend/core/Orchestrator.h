@@ -3,8 +3,10 @@
 #include "RagRetriever.h"
 #include "LLMEngine.h"
 #include "PluginManager.h"
+#include "ILLMProvider.h"
 
 using LLMResponseCallbackFn = std::function<void(const std::string& response, Status status)>;
+
 
 class Orchestrator {
 public:
@@ -17,7 +19,7 @@ public:
 
     void handleUserInput(
         const std::string& userInput, 
-        LLMResponseCallbackFn callback);
+        LocalAI_TextCallback callback);
 
 private:
     ConversationManager* conv_;

@@ -13,6 +13,7 @@ void LLMEngine::infer(
     const std::string& userInput,
     LLMInferCallbackFn callback
 ) {
+#if 0
     // Build prompt from history, candidates, and user input
     std::string prompt;
     for (const auto& msg : history) {
@@ -58,5 +59,6 @@ void LLMEngine::infer(
 
             result.assistantMessage = response;
             callback(result, status);
-        });
+        }, this);
+#endif
 }

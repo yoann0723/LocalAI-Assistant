@@ -3,6 +3,9 @@
 #include "core_common.h"
 #include "core_export.h"
 #include "localai_c_api.h"
+#include "IASRProvider.h"
+#include "ILLMProvider.h"
+#include "IEmbeddingProvider.h"
 #include <memory>
 #include <mutex>
 
@@ -29,6 +32,18 @@ public:
 		}
 
 		return nullptr;
+	}
+
+	const ILLMProvider* llm() {
+		return modelProvider<ILLMProvider>(LOCALAI_MODEL_TEXT_GEN);
+	}
+
+	const IEmbeddingProvider* embedding() {
+		return modelProvider<IEmbeddingProvider>(LOCALAI_MODEL_EMBEDDING);
+	}
+
+	const IASRProvider* asr() {
+		return modelProvider<IASRProvider>(LOCALAI_MODEL_ASR);
 	}
 
 	bool getModelParams(

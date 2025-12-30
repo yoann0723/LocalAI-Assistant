@@ -6,8 +6,8 @@
 #include <string_view>
 #include <expected.hpp>
 #include <memory>
-#include "../core/localai_c_api.h"
-#include "../common/common.h"
+#include "localai_c_api.h"
+#include "../common/common.hpp"
 //#include "../inference-provider/IInferenceProvider.h"
 //#include "model_provider_export.h"
 

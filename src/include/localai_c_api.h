@@ -39,6 +39,8 @@ typedef struct LocalAI_Request_t LocalAI_Request;
 /* Satus handle: contains error code and error message */
 typedef struct LocalAI_Status_t LocalAI_Status;
 
+typedef struct LocalAI_ChatSession_t LocalAI_ChatSession;
+
 typedef enum {
     LOCALAI_OK = 0,
     LOCALAI_UNKNOWN,
@@ -50,11 +52,27 @@ typedef enum {
     LOCALAI_OOM,
     LOCALAI_CANCELLED,
     LOCALAI_TIMEOUT,
+    LOCALAI_RUNTIME_ERROR,
     LOCALAI_MODEL_TOKENIZE_ERROR,
     LOCALAI_MODEL_DECODE_ERROR,
     LOCALAI_MODEL_GENERATE_ERROR,
     LOCALAI_INTERNAL = 100
 } LocalAI_ErrorCode;
+
+typedef enum {
+    LOCALAI_LOG_LEVEL_ERROR = 0,
+    LOCALAI_LOG_LEVEL_WARN = 1,
+    LOCALAI_LOG_LEVEL_INFO = 2,
+	LOCALAI_LOG_LEVEL_DEBUG = 3
+}LogLevel;
+
+typedef enum {
+    LOCALAI_REQUEST_PENDING,
+    LOCALAI_REQUEST_RUNNING,
+    LOCALAI_REQUEST_CANCELLED,
+    LOCALAI_REQUEST_COMPLETED,
+    LOCALAI_REQUEST_FAILED
+}LocalAI_RequestStatus;
 
 /**
  * Construct a pointer to LocalAI_Status with error code and msg.
@@ -128,7 +146,7 @@ typedef struct{
 typedef struct {
     char* text; /* NUL-terminated, heap allocated by library (malloc or compatible) */
 } LocalAI_TextResult;
-LOCALAI_API LocalAI_Status* LocalAI_TextResult_Free(LocalAI_TextResult* r);
+LOCALAI_API LocalAI_Status* LocalAI_TextResult_Free(const LocalAI_TextResult* r);
 
 /* Embedding result */
 typedef struct {
@@ -161,6 +179,9 @@ LOCALAI_API LocalAI_Status* LocalAI_Core_Shutdown(void);
 LOCALAI_API LocalAI_Status* LocalAI_Core_InitializeModel(Model_Type model, const char *model_path, 
                                                          Model_Params params);
 
+LOCALAI_API LocalAI_Status* LocalAI_Core_CreateSession(LocalAI_ChatSession** out_session);
+LOCALAI_API void LocalAI_Core_ReleaseSession(LocalAI_ChatSession* session);
+
 LOCALAI_API LocalAI_Status* LocalAI_Core_Update_TextModelParams(Model_Params params);
 LOCALAI_API LocalAI_Status* LocalAI_Core_Update_ASRModelParams(Model_Params params);
 LOCALAI_API LocalAI_Status* LocalAI_Core_Update_VisionModelParams(Model_Params params);
@@ -169,9 +190,8 @@ LOCALAI_API LocalAI_Status* LocalAI_Core_Update_EmbeddingModelParams(Model_Param
 /* Logging: supply a callback to receive library logs (thread-safe).
  * level: 0=error,1=warn,2=info,3=debug
  */
-typedef void (*LocalAI_LogCallback)(int level, const char* message, void* user_data);
-LOCALAI_API LocalAI_Status LocalAI_Core_SetLogCallback(LocalAI_LogCallback cb, void* user_data);
-LOCALAI_API LocalAI_Status LocalAI_Core_SetLogLevel(int level);
+typedef void (*LocalAI_LogCallback)(LogLevel level, const char* message, void* user_data);
+LOCALAI_API void LocalAI_Core_SetLogCallback(LocalAI_LogCallback cb, void* user_data);
 
 /* ---------- Asynchronous (non-blocking) APIs ----------
    Submits a request and returns immediately. out_request can be NULL if caller doesn't wish to control it.
@@ -179,9 +199,9 @@ LOCALAI_API LocalAI_Status LocalAI_Core_SetLogLevel(int level);
    - The library guarantees the callback will be invoked exactly once for a submitted request unless the request is cancelled and cancelled callbacks are disabled.
    - The callback receives a result pointer which the callback MUST NOT free; the callback should copy data if needed; after callback returns, user should call LocalAI_RequestRelease to free request resources.
 */
-LOCALAI_API LocalAI_Status* LocalAI_GenerateAsync(const char* prompt, const char* params_json, 
-                                                  LocalAI_TextCallback cb, void* user_data,
-                                                  LocalAI_Request** out_request);
+LOCALAI_API LocalAI_Status* LocalAI_GenerateAsync(LocalAI_ChatSession *session, const char* prompt,
+                                                  const char* params_json, LocalAI_TextCallback cb,
+                                                  void* user_data, LocalAI_Request** out_request);
 
 LOCALAI_API LocalAI_Status* LocalAI_Embed(const char* text, LocalAI_EmbeddingResult *result);
 
@@ -201,7 +221,7 @@ LOCALAI_API LocalAI_Status* LocalAI_VisionAsync(const uint8_t* image_bytes,
 LOCALAI_API LocalAI_Status* LocalAI_Request_Cancel(LocalAI_Request* request);
 LOCALAI_API LocalAI_Status* LocalAI_Request_Wait(LocalAI_Request* request, int64_t timeout_ms);
 LOCALAI_API LocalAI_Status* LocalAI_Request_Status(LocalAI_Request* request, int* out_status);
-LOCALAI_API LocalAI_Status* LocalAI_Request_Release(LocalAI_Request* request);
+LOCALAI_API void LocalAI_Request_Release(LocalAI_Request* request);
 
 #ifdef __cplusplus
 }
