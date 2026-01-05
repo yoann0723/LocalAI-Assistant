@@ -2,17 +2,18 @@
 #include <string>
 #include <deque>
 #include <vector>
+#include "../common/common.hpp"
 
-enum class Role {
-    USER,
-    ASSISTANT,
-    SYSTEM
-};
-
-struct Message {
-    Role role;
-    std::string content;
-};
+//enum class Role {
+//    USER,
+//    ASSISTANT,
+//    SYSTEM
+//};
+//
+//struct Message {
+//    Role role;
+//    std::string content;
+//};
 
 class ConversationManager {
 public:

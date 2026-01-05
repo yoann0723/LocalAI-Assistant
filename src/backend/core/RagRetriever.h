@@ -5,12 +5,6 @@
 #include "AIModelHub.h"
 #include "IEmbeddingProvider.h"
 
-struct CapabilityInfo {
-    std::string name;
-    std::string description;
-    std::vector<float> embedding;
-};
-
 class RagRetriever {
 public:
     RagRetriever() = default;
@@ -22,7 +16,7 @@ public:
 
     void loadCapabilities(const std::vector<CapabilityInfo>& caps);
 
-    // inpuit = current context(multi-turn) + user query
+    // input = current context(multi-turn) + user query
     std::vector<CapabilityInfo> retrieve(std::string_view query);
 
 private:

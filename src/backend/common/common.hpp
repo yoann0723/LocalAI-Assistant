@@ -3,6 +3,7 @@
 #include <variant>
 #include <functional>
 #include <span>
+#include <format>
 #include "localai_c_api.h"
 
 struct Status {
@@ -11,6 +12,11 @@ struct Status {
 
     operator bool() const {
         return code == LocalAI_ErrorCode::LOCALAI_OK;
+    }
+
+    // Combine error code and msg. Used for logs
+    std::string str() const{
+        return std::format("error: {:d}, msg: {}", static_cast<int>(code), error);
     }
 };
 
@@ -64,6 +70,40 @@ struct RagOutput {
 
 struct PluginOutput {
 
+};
+
+enum class StepStatus {
+    Ok,
+    Failed,
+    Cancelled
+};
+
+enum class PipelineStatus {
+    Idle,
+    Running,
+    Stopped
+};
+
+struct StepResult {
+    StepStatus status;
+    std::string message;
+};
+
+enum class Role:int8_t {
+    USER,
+    ASSISTANT,
+    SYSTEM
+};
+
+struct Message {
+    Role role;
+    std::string content;
+};
+
+struct CapabilityInfo {
+    std::string name;
+    std::string description;
+    std::vector<float> embedding;
 };
 
 namespace LocalAI {

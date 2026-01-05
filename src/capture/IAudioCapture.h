@@ -14,6 +14,11 @@
 
 namespace Capture::audio {
 
+    struct AudioInfo {
+        int sample_rate;
+        int channels;
+    };
+
     /**
      * @class   MyClass
      * @brief   Brief description of MyClass
@@ -36,7 +41,7 @@ namespace Capture::audio {
          * @date    $time$
          */
 
-		virtual bool initialize(int sampleRate, int bufferLenMS = MAX_AUDIO_CAPTURE_BUFFER_MS, AudioCaptureCallbackFn callback = nullptr) = 0;
+		virtual bool initialize(int sampleRate, int bufferLenMS, AudioCaptureCallbackFn callback) = 0;
         
 
         /**
@@ -108,7 +113,9 @@ namespace Capture::audio {
          * @date    $time$
          */
 
-		virtual size_t getAudioData(int ms, std::shared_ptr<float>& out) = 0;
+		virtual size_t getAudioData(float* buffer, int buffer_size, int ms) = 0;
+
+        virtual AudioInfo getAudioInfo() = 0;
     };
 
     std::unique_ptr<IAudioCapture> createAudioCapture();

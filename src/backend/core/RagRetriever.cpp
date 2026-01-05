@@ -19,7 +19,8 @@ void RagRetriever::loadCapabilities(const std::vector<CapabilityInfo>& caps) {
     capabilities_ = caps;
 }
 
-std::vector<CapabilityInfo> RagRetriever::retrieve(std::string_view query) {
+std::vector<CapabilityInfo> RagRetriever::retrieve(std::string_view query) 
+{
 
     LocalAI_EmbeddingResult out;
     auto ok = embed(query, &out);

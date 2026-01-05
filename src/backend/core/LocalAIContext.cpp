@@ -1,4 +1,5 @@
 #include "LocalAIContext.h"
+#include "ASREngine.h"
 #include "../common/common.hpp"
 
 using namespace LocalAI;
@@ -160,6 +161,22 @@ void LocalAI_Request_t::cancel()
 	impl_->pipeline->cancel();
 }
 
+struct LocalAI_ASR_Model_t::Impl {
+	std::unique_ptr<IASRProvider> model;
+};
+
+LocalAI_ASR_Model_t::LocalAI_ASR_Model_t()
+	:impl_(std::make_unique<LocalAI_ASR_Model_t::Impl>())
+{}
+
+struct LocalAI_Text_Model_t::Impl {
+	std::unique_ptr<ILLMProvider> model;
+};
+
+LocalAI_Text_Model_t::LocalAI_Text_Model_t()
+	:impl_(std::make_unique<LocalAI_Text_Model_t::Impl>())
+{}
+
 LOCALAI_API LocalAI_Status* LocalAI_GenerateAsync(
 	LocalAI_ChatSession_t* session, const char* prompt, const char* params_json,
 	LocalAI_TextCallback cb, void* user_data, 
@@ -198,7 +215,7 @@ LOCALAI_API LocalAI_Status* LocalAI_VisionAsync(
 	return nullptr;
 }
 
-LOCALAI_API LocalAI_Status* LocalAI_Core_CreateSession(LocalAI_ChatSession_t** out_session)
+LOCALAI_API LocalAI_Status* LocalAI_Core_CreateChatSession(LocalAI_ChatSession_t** out_session)
 {
 	LOCALAI_CHECK_CTX();
 
@@ -209,7 +226,7 @@ LOCALAI_API LocalAI_Status* LocalAI_Core_CreateSession(LocalAI_ChatSession_t** o
 	return nullptr;
 }
 
-LOCALAI_API void LocalAI_Core_ReleaseSession(LocalAI_ChatSession* session)
+LOCALAI_API void LocalAI_Core_ReleaseChatSession(LocalAI_ChatSession* session)
 {
 	if (!g_context || !session)
 		return;
@@ -217,6 +234,78 @@ LOCALAI_API void LocalAI_Core_ReleaseSession(LocalAI_ChatSession* session)
 	g_context->removeChatSession(session->impl_);
 
 	delete session;
+}
+
+LocalAI_Status* LocalAI_ASR_Model_Create(const char* model_path,
+	Model_Params params, LocalAI_ASR_Model_t** out_model)
+{
+	auto asr_model = std::make_unique<LocalAI_ASR_Model_t>();
+	asr_model->impl_->model = ModelProviderFactory::createASRModel();
+	auto status = asr_model->impl_->model->initialize(model_path, params);
+	if (!status) {
+		*out_model = nullptr;
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, status.str().c_str());
+	}
+	else {
+		*out_model = asr_model.release();
+	}
+	return StatusConvert(status);
+}
+
+void LocalAI_ASR_Model_Release(LocalAI_ASR_Model_t* model)
+{
+	if (model) {
+		delete model;
+	}
+}
+
+LocalAI_Status* LocalAI_Text_Model_Create(const char* model_path,
+	Model_Params params, LocalAI_Text_Model_t** out_model)
+{
+	auto text_model = std::make_unique<LocalAI_Text_Model>();
+	text_model->impl_->model = ModelProviderFactory::createLLModel();
+	auto status = text_model->impl_->model->initialize(model_path, params);
+	if (!status) {
+		*out_model = nullptr;
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, status.str().c_str());
+	}
+	else {
+		*out_model = text_model.release();
+	}
+	return StatusConvert(status);
+}
+
+void LocalAI_Text_Model_Release(LocalAI_Text_Model_t* model)
+{
+	if (model) {
+		delete model;
+	}
+}
+
+LocalAI_Status* LocalAI_ChatEnableASR(LocalAI_ChatSession_t* session,
+	LocalAI_AudioProviderInfo* audio_provider, LocalAI_ASR_Model* asr_model)
+{
+	return StatusConvert(session->enableASR(audio_provider, asr_model));
+}
+
+void LocalAI_ChatDisableASR(LocalAI_ChatSession_t* session)
+{
+	session->disableASR();
+}
+
+void LocalAI_ChatResumeASR(LocalAI_ChatSession_t* session)
+{
+	session->resumeASR();
+}
+
+void LocalAI_ChatPauseASR(LocalAI_ChatSession_t* session)
+{
+	session->pauseASR();
+}
+
+void LocalAI_ChatStopASR(LocalAI_ChatSession_t* session)
+{
+	session->stopAASR();
 }
 
 const char* LocalAI_GetModelName(Model_Type type)
@@ -334,6 +423,7 @@ struct ChatSessionImpl {
 		PluginManager* pm)
 		:model_hub_(model_hub), pm_(pm) {
 
+		conv_ = std::make_unique<ConversationManager>();
 		rag_ = std::make_unique<RagRetriever>(model_hub_->embedding());
 		//TODO: load capabilities from plugin manager.
 		rag_->loadCapabilities({});
@@ -341,28 +431,42 @@ struct ChatSessionImpl {
 	}
 
 	~ChatSessionImpl() {
+		if (asrEngine_) {
+			asrEngine_->stop();
+		}
 		fprintf(stderr, "ChatSessionImpl: `%p` destroyed.\n", (void*)this);
 	}
 
-	std::shared_ptr<AsyncPipeline> createChatPipeline() {
+	std::shared_ptr<AsyncPipeline> createChatPipeline() 
+	{
 		auto pipeline = std::make_shared<AsyncPipeline>("Chat pipeline");
-		// Step01: embedding input text and retreive top-k from all plugin's capabilities.   
+		if (asr_enabled) {
+			// TODO: add ASR step
+			//pipeline->addStep();
+		}
+		// Embedding input text and retreive top-k from all plugin's capabilities.   
 		pipeline->addStep(std::make_unique<RagStep>(rag_.get()));
-		// Step02: create a prompt with retreived capabilities feed it into llm.
+
+		// Handle user input and history messages, apply chat template for messages.
+		pipeline->addStep(std::make_unique<PromptStep>(conv_.get()));
+
+		// Run LLM inference
 		pipeline->addStep(std::make_unique<LLMStep>(model_hub_->llm()));
-		// Step03: Call the plugins that the llm returns.
-		pipeline->addStep(std::make_unique<ChatResponseStep>());
-		// Last step: generate response text.
+
+		// Call the plugins according to LLM's result
+		pipeline->addStep(std::make_unique<PluginExecStep>(conv_.get()));
+
+		// Response to caller.
 		pipeline->setFinalizer(std::make_unique<ChatFinalizer>());
 		return pipeline;
 	}
 
 	std::shared_ptr<AsyncPipeline> chat(std::string_view message, std::string_view params,
-		LocalAI_TextCallback callback, void* user_data) {
-
+		LocalAI_TextCallback callback, void* user_data) 
+	{
 		auto pipeline = createChatPipeline();
 		auto pipelineCtx = std::make_shared<PipelineContext>();
-		pipelineCtx->prompt = message;
+		pipelineCtx->user_input = message;
 		pipeline->start(pipelineCtx, [callback, user_data](const Status& status, void* result) {
 			if (!status) {
 				fprintf(stderr, "Failed to execute the pipeline.error: %s\n", status.error.c_str());
@@ -379,6 +483,52 @@ struct ChatSessionImpl {
 		return pipeline;
 	}
 
+	Status enableASR(LocalAI_AudioProviderInfo* audio_provider, 
+		LocalAI_ASR_Model_t* asrModel)
+	{
+		if (!asrEngine_) {
+			asrEngine_ = std::make_unique<ASREngine>(asrModel->impl_->model.get(), audio_provider);
+			asr_enabled = true;
+		}
+
+		return {};
+	}
+
+	void disableASR() 
+	{
+		asr_enabled = false;
+		if (asrEngine_) {
+			asrEngine_->stop();
+		}
+	}
+
+	Status resumeASR() 
+	{
+		if (asrEngine_) {
+			asrEngine_->resume();
+		}
+
+		return {};
+	}
+
+	Status stopASR() 
+	{
+		if (asrEngine_) {
+			asrEngine_->stop();
+		}
+
+		return {};
+	}
+
+	Status pauseASR() 
+	{
+		if (asrEngine_) {
+			asrEngine_->pause();
+		}
+
+		return {};
+	}
+
 private:
 	//std::shared_ptr<AsyncPipeline> chat_pipeline_;
 
@@ -386,9 +536,11 @@ private:
 	std::unique_ptr<LLMEngine> llm_engine_;
 	std::unique_ptr<Orchestrator> orch_;
 	std::unique_ptr<RagRetriever> rag_;
+	std::unique_ptr<ASREngine> asrEngine_;
 
 	AIModelHub* model_hub_;
 	PluginManager* pm_;
+	bool asr_enabled = false;
 };
 
 //LocalAI_ChatSession_t::LocalAI_ChatSession_t(
@@ -412,4 +564,30 @@ void LocalAI_ChatSession_t::chat(
 		auto pipeline = impl_->chat(message, params, callback, user_data);
 		(*out_request)->impl_->pipeline = pipeline;
 	}
+}
+
+Status LocalAI_ChatSession_t::enableASR(LocalAI_AudioProviderInfo* audio_provider,
+	LocalAI_ASR_Model* asrModel)
+{
+	return impl_->enableASR(audio_provider, std::move(asrModel));
+}
+
+void LocalAI_ChatSession_t::disableASR()
+{
+	impl_->disableASR();
+}
+
+Status LocalAI_ChatSession_t::resumeASR()
+{
+	return impl_->resumeASR();
+}
+
+Status LocalAI_ChatSession_t::pauseASR()
+{
+	return impl_->pauseASR();
+}
+
+Status LocalAI_ChatSession_t::stopAASR()
+{
+	return impl_->stopASR();
 }

@@ -46,6 +46,11 @@ public:
 		return modelProvider<IASRProvider>(LOCALAI_MODEL_ASR);
 	}
 
+	template <class T>
+	std::unique_ptr<T> createModel() {
+		
+	}
+
 	bool getModelParams(
 		Model_Type type,
 		Model_Params& params);

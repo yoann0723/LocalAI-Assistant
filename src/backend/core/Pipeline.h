@@ -1,23 +1,26 @@
 #pragma once
 #include "ILLMProvider.h"
 #include "RagRetriever.h"
+#include "PromptGenerator.h"
+#include "ConversationManager.h"
+#include "../common/common.hpp"
 
-enum class StepStatus {
-    Ok,
-    Failed,
-    Cancelled
-};
-
-enum class PipelineStatus {
-    Idle,
-    Running,
-    Stopped
-};
-
-struct StepResult {
-    StepStatus status;
-    std::string message;
-};
+//enum class StepStatus {
+//    Ok,
+//    Failed,
+//    Cancelled
+//};
+//
+//enum class PipelineStatus {
+//    Idle,
+//    Running,
+//    Stopped
+//};
+//
+//struct StepResult {
+//    StepStatus status;
+//    std::string message;
+//};
 
 using StepCompleteCallback = std::function<void(StepResult)>;
 
@@ -33,11 +36,12 @@ struct PipelineContext {
 
     std::atomic<bool> cancelled{ false };
     std::atomic<PipelineStatus> status{ PipelineStatus::Stopped };
-    std::string prompt;
-	const LLMOutput* llm_result = nullptr;
+    std::string user_input; // the user input context 
+    std::string prompt; // the prompt that will be feeded into LLM (applied the history messages and chat template)
+	const LLMOutput* llm_result = nullptr; // the middle result from LLM
+    std::string response; //the final result that will be returned to the caller.
 	LocalAI_EmbeddingResult emb_result;
     std::vector<CapabilityInfo> cap_info;
-    std::string response;
     void* user_data = nullptr;
 };
 
@@ -48,6 +52,8 @@ public:
     virtual void run(
         std::shared_ptr<PipelineContext> ctx,
         StepCompleteCallback on_complete) = 0;
+
+    virtual void onCancel() {};
 
     virtual const char* name() const = 0;
 };
@@ -132,6 +138,35 @@ private:
     RagRetriever* retriever_ = nullptr;
 };
 
+class PromptStep final : public AsyncStep {
+public:
+    PromptStep(ConversationManager* conv) :conv_(conv) {}
+
+    const char* name() const override
+    {
+        return "Prompt handle step.";
+    }
+
+    void run(std::shared_ptr<PipelineContext> ctx,
+        StepCompleteCallback on_complete) override
+    {
+        if (ctx->user_input.empty()) {
+            on_complete({ StepStatus::Failed, "The user input content is empty."});
+        }
+        else {
+            auto prompt_messages = PromptGenerator::buildPrompt(conv_->buildHistoryForLLM(), 
+                ctx->user_input, ctx->cap_info);
+
+            ctx->prompt = PromptGenerator::promptApplyTemplate(prompt_messages, true);
+            conv_->addUserMessage(ctx->user_input);
+            on_complete({ StepStatus::Ok, {} });
+        }
+    }
+
+private:
+    ConversationManager* conv_ = nullptr;
+};
+
 class LLMStep final : public AsyncStep {
 public:
     LLMStep(const ILLMProvider* llm) :llm_(llm) {}
@@ -139,6 +174,12 @@ public:
     const char* name() const override
     {
         return "LLM genration step (async)";
+    }
+
+    // Since the LLM inference procedure may takes long time, it should can be cancelled.
+    void onCancel() override 
+    {
+        // Not implemanted
     }
 
     void run(std::shared_ptr<PipelineContext> ctx,
@@ -160,9 +201,9 @@ private:
     const ILLMProvider* llm_;
 };
 
-class ChatResponseStep final : public AsyncStep {
+class PluginExecStep final : public AsyncStep {
 public:
-    ChatResponseStep() {};
+	PluginExecStep(ConversationManager* conv) :conv_(conv) {}
 
     // Inherited via AsyncStep
     void run(std::shared_ptr<PipelineContext> ctx,
@@ -171,6 +212,7 @@ public:
         //TODO:
         if (ctx->llm_result) {
             ctx->response = ctx->llm_result->text;
+            conv_->addAssistantMessage(ctx->response);
         }
         else {
             ctx->response = {};
@@ -180,22 +222,28 @@ public:
 
     const char* name() const override 
     {
-        return "Chat Response Step";
+        return "Plugin execution Step";
     }
+
+private:
+    ConversationManager* conv_ = nullptr;
 };
 
 class AsyncPipeline : public std::enable_shared_from_this<AsyncPipeline> {
 public:
     using AsyncFinalFnCb = std::function<void(const Status &status, void* result)>;
     explicit AsyncPipeline(const char *name)
-        : name_(name) {
+        : name_(name) 
+    {
     }
 
-    void setFinalizer(std::unique_ptr<PipelineFinalizer> finalizer) {
+    void setFinalizer(std::unique_ptr<PipelineFinalizer> finalizer) 
+    {
         finalizer_ = std::move(finalizer);
     }
 
-    void addStep(std::unique_ptr<AsyncStep> step) {
+    void addStep(std::unique_ptr<AsyncStep> step) 
+    {
         steps_.emplace_back(std::move(step));
     }
 
@@ -209,24 +257,28 @@ public:
         runStep(0);
     }
 
-    void cancel() {
+    void cancel() 
+    {
         fprintf(stderr, "Cancel pipeline '%s'.\n", name_ ? name_ : "unnamed");
         ctx_->cancelled.store(true, std::memory_order_relaxed);
     }
 
-    LocalAI_RequestStatus status() const {
+    LocalAI_RequestStatus status() const 
+    {
         return status_;
     }
 
 private:
     void runStep(size_t index) {
-        if (ctx_->cancelled) {
+        if (ctx_->cancelled) 
+        {
             status_ = LOCALAI_REQUEST_CANCELLED;
             completeWithError({ LocalAI_ErrorCode::LOCALAI_CANCELLED, "Pipeline cancelled" });
             return;
         }
 
-        if (index >= steps_.size()) {
+        if (index >= steps_.size()) 
+        {
             completeWithSuccess();
             return;
         }
@@ -270,7 +322,8 @@ private:
         }
     }
 
-    void completeWithStepError(size_t idx, const StepResult& r) {
+    void completeWithStepError(size_t idx, const StepResult& r) 
+    {
         std::string msg =
             std::string("Step failed: ") + steps_[idx]->name() + " - " + r.message;
 

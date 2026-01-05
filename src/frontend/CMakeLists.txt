@@ -35,9 +35,9 @@ else()
 endif()
 
 # Make the application a Windows GUI app (no console) on Windows
-if(OS_WINDOWS)
-  set_target_properties(ai-assistant PROPERTIES WIN32_EXECUTABLE ON OUTPUT_NAME ai-assistant)
-endif()
+# if(OS_WINDOWS)
+#  set_target_properties(ai-assistant PROPERTIES WIN32_EXECUTABLE ON OUTPUT_NAME ai-assistant)
+# endif()
 
 # Include localai headers
 target_include_directories(ai-assistant PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)

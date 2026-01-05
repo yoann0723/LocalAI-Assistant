@@ -18,14 +18,5 @@ int main(int argc, char* argv[])
     if (engine.rootObjects().isEmpty())
         return -1;
 
-    auto capture = Capture::audio::createAudioCapture();
-    capture->initialize(16000);
-    capture->resume();
-
-	QThread::msleep(2000);
-	std::shared_ptr<float> audioData;
-    capture->getAudioData(2000, audioData);
-
-
     return app.exec();
 }

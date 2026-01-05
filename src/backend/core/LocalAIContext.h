@@ -25,10 +25,29 @@ struct LocalAI_Request_t {
 	void cancel();
 };
 
+struct LocalAI_ASR_Model_t {
+	struct Impl;
+	std::unique_ptr<Impl> impl_;
+	LocalAI_ASR_Model_t();
+};
+
+struct LocalAI_Text_Model_t {
+	struct Impl;
+	std::unique_ptr<Impl> impl_;
+	LocalAI_Text_Model_t();
+};
+
 struct LocalAI_ChatSession_t {
 
 	void chat(std::string_view message, std::string_view params, LocalAI_Request** out_request,
 		LocalAI_TextCallback callback, void *user_data);
+
+	Status enableASR(LocalAI_AudioProviderInfo* audio_provider, 
+		LocalAI_ASR_Model* asrModel);
+	void disableASR();
+	Status resumeASR();
+	Status pauseASR();
+	Status stopAASR();
 
 	/*std::unique_ptr<AsyncPipeline> chat_pipeline_;
 
@@ -65,6 +84,11 @@ struct LocalAI_Context_t {
 
 	const IASRProvider* asrProvider() {
 		return model_hub_->modelProvider<IASRProvider>(Model_Type::LOCALAI_MODEL_ASR);
+	}
+
+	template <class T>
+	std::unique_ptr<T> createModel(int nthread = 1) {
+		std::make_unique<T>(nthread);
 	}
 
 	ChatSessionSharedPtr createChatSession();

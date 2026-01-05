@@ -53,6 +53,8 @@ public:
 
     virtual Status generate(
         std::string_view prompt, LLMOutput** output) = 0;
+
+    virtual void stopGenerate() = 0;
 };
 
 class IASRInferProvider {

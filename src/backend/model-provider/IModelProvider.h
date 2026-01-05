@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <span>
+#include <optional>
 #include <string_view>
 #include <expected.hpp>
 #include <memory>
@@ -33,6 +34,8 @@ enum class BuildInModelType {
 template<typename T>
 using Result = tl::expected<T, LocalAI_ErrorCode>;
 
+using LLMCallback = std::function<void(const LLMOutput* result, const Status& status)>;
+
 class IModelProvider {
 public:
 	virtual ~IModelProvider() = default;
@@ -51,10 +54,27 @@ public:
 	virtual void unInitialize() = 0;
 };
 
+class IASRProvider : public IModelProvider {
+public:
+	virtual Status transcribe(std::span<const float> samples, std::string& out) = 0;
+};
+
+class ILLMProvider : public IModelProvider {
+public:
+	virtual void generateAsync(
+		std::string_view prompt, std::optional<std::string_view> params,
+		size_t max_len,
+		LLMCallback callback) const = 0;
+};
+
 class ModelProviderFactory {
 public:
 	static std::unique_ptr<IModelProvider> createBuildInModel(
 		BuildInModelType type, size_t n_thread = 0);
+
+	static std::unique_ptr<IASRProvider> createASRModel();
+
+	static std::unique_ptr<ILLMProvider> createLLModel();
 
 	static std::unique_ptr<IModelProvider> createCustomModel(
 		InferenceType infernce_type, size_t n_thread = 0);

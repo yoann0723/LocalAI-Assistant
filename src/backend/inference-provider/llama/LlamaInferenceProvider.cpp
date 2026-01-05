@@ -3,7 +3,7 @@
 #include <assert.h>
 
 constexpr const int ngl = 99;
-constexpr const int n_ctx = 2048;
+constexpr const int n_ctx = 4096;
 
 LlamaInferenceProvider::LlamaInferenceProvider()
 {
@@ -87,22 +87,30 @@ Status LlamaInferenceProvider::generate(std::string_view user, LLMOutput** outpu
 	if (!output)
 		return { LOCALAI_INVALID_ARG, "The response pointer is null" };
 
+	force_stopped_ = false;
+
 	const char* tmpl = llama_model_chat_template(model_.get(), /* name */ nullptr);
 
-	// add the user input to the message list and format it
-	messages_.push_back({ "user", strdup(user.data()) });
-	int new_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), true, formatted_.data(), formatted_.size());
-	if (new_len > (int)formatted_.size()) {
-		formatted_.resize(new_len);
-		new_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), true, formatted_.data(), formatted_.size());
-	}
-	if (new_len < 0) {
-		fprintf(stderr, "failed to apply the chat template\n");
-		return { LOCALAI_MODEL_GENERATE_ERROR, "failed to apply the chat template"};
-	}
+	std::string_view prompt;
+	if (use_history_messages_) {
+		// add the user input to the message list and format it
+		messages_.push_back({ "user", strdup(user.data()) });
+		int new_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), true, formatted_.data(), formatted_.size());
+		if (new_len > (int)formatted_.size()) {
+			formatted_.resize(new_len);
+			new_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), true, formatted_.data(), formatted_.size());
+		}
+		if (new_len < 0) {
+			fprintf(stderr, "failed to apply the chat template\n");
+			return { LOCALAI_MODEL_GENERATE_ERROR, "failed to apply the chat template"};
+		}
 
-	// remove previous messages to obtain the prompt to generate the response
-	std::string prompt(formatted_.begin() + prev_len, formatted_.begin() + new_len);
+		// remove previous messages to obtain the prompt to generate the response
+		prompt = std::string_view(formatted_.begin() + prev_len, formatted_.begin() + new_len);
+	}
+	else {
+		prompt = user;
+	}
 
 	auto response = std::make_unique<LLMOutput>();
 
@@ -149,7 +157,7 @@ Status LlamaInferenceProvider::generate(std::string_view user, LLMOutput** outpu
 		new_token_id = llama_sampler_sample(smpl_.get(), ctx_.get(), -1);
 
 		// is it an end of generation?
-		if (llama_vocab_is_eog(vocab, new_token_id)) {
+		if (llama_vocab_is_eog(vocab, new_token_id) || force_stopped_) {
 			break;
 		}
 
@@ -187,20 +195,30 @@ Status LlamaInferenceProvider::generate(std::string_view user, LLMOutput** outpu
 
 		// prepare the next batch with the sampled token
 		batch = llama_batch_get_one(&new_token_id, 1);
+
+		fprintf(stderr, "%s", response->text.c_str());
+		fflush(stderr);
 	}
 
 	response->text.resize(response->piece_count + 1);
 	response->text[response->piece_count] = '\0';
 	response->text.shrink_to_fit();
 
-	// add the response to the messages
-	messages_.push_back({ "assistant", strdup(response->text.c_str()) });
-	prev_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), false, nullptr, 0);
-	if (prev_len < 0) {
-		fprintf(stderr, "failed to apply the chat template\n");
-		return { LOCALAI_MODEL_GENERATE_ERROR, "failed to apply the chat template" };
+	if (use_history_messages_) {
+		// add the response to the messages
+		messages_.push_back({ "assistant", strdup(response->text.c_str()) });
+		prev_len = llama_chat_apply_template(tmpl, messages_.data(), messages_.size(), false, nullptr, 0);
+		if (prev_len < 0) {
+			fprintf(stderr, "failed to apply the chat template\n");
+			return { LOCALAI_MODEL_GENERATE_ERROR, "failed to apply the chat template" };
+		}
 	}
 
 	*output = response.release();
 	return {};
+}
+
+void LlamaInferenceProvider::stopGenerate()
+{
+	force_stopped_ = true;
 }

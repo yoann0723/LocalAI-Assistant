@@ -3,43 +3,43 @@
 #include "ThreadPool.h"
 #include "../common/common.hpp"
 
-ILLMProvider::ILLMProvider(size_t n_thread)
+LLMProviderImpl::LLMProviderImpl(size_t n_thread)
 	:engine_(std::move(InferenceFactory::createLLMInfer())),
 	pool_(std::make_unique<ThreadPool>(n_thread == 0 ? 1 : n_thread).release())
 {
 }
 
-ILLMProvider::~ILLMProvider() 
+LLMProviderImpl::~LLMProviderImpl() 
 {
 	unInitialize();
 }
 
-const char* ILLMProvider::name() const
+const char* LLMProviderImpl::name() const
 {
 	return "llm";
 }
 
-ModelCapability ILLMProvider::capability() const
+ModelCapability LLMProviderImpl::capability() const
 {
 	return ModelCapability::TextGeneration;
 }
 
-Status ILLMProvider::initialize(const char* model_path, const Model_Params& params)
+Status LLMProviderImpl::initialize(const char* model_path, const Model_Params& params)
 {
 	return engine_->initialize(model_path, params);
 }
 
-Status ILLMProvider::updateParams(const Model_Params& params)
+Status LLMProviderImpl::updateParams(const Model_Params& params)
 {
 	return engine_->updateParams(params);
 }
 
-void ILLMProvider::unInitialize()
+void LLMProviderImpl::unInitialize()
 {
 	pool_->stop();
 }
 
-//void ILLMProvider::generateAsync(
+//void LLMProviderImpl::generateAsync(
 //	std::string_view prompt, std::optional<std::string_view> params,
 //	size_t max_len, 
 //	LocalAI_TextCallback callback, void* user_data) const
@@ -59,7 +59,7 @@ void ILLMProvider::unInitialize()
 //	});
 //}
 
-void ILLMProvider::generateAsync(
+void LLMProviderImpl::generateAsync(
 	std::string_view prompt, std::optional<std::string_view> params,
 	size_t max_len, LLMCallback callback) const
 {

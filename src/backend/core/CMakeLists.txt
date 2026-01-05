@@ -29,6 +29,8 @@ set(CORE_SOURCES
 	PromptGenerator.cpp
 	Pipeline.h
 	Pipeline.cpp
+	ASREngine.h
+	ASREngine.cpp
 	# ThreadPool.h
 	# ThreadPool.cpp
 	# ModelBridge.h

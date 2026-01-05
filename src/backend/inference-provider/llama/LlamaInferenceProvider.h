@@ -25,6 +25,8 @@ public:
     Status generate(
         std::string_view prompt, LLMOutput** output) override;
 
+    void stopGenerate() override;
+
 private:
     llama_sampler_ptr smpl_;
     llama_context_ptr ctx_;
@@ -32,4 +34,6 @@ private:
     std::vector<llama_chat_message> messages_;
     std::vector<char> formatted_;
     int prev_len = 0;
+    bool use_history_messages_ = false;
+    std::atomic<bool> force_stopped_ = false;
 };

@@ -41,6 +41,14 @@ typedef struct LocalAI_Status_t LocalAI_Status;
 
 typedef struct LocalAI_ChatSession_t LocalAI_ChatSession;
 
+typedef struct LocalAI_Text_Model_t LocalAI_Text_Model;
+
+typedef struct LocalAI_ASR_Model_t LocalAI_ASR_Model;
+
+typedef struct LocalAI_Embedding_Model_t LocalAI_Embedding_Model;
+
+typedef struct LocalAI_Vision_Model_t LocalAI_Vision_Model;
+
 typedef enum {
     LOCALAI_OK = 0,
     LOCALAI_UNKNOWN,
@@ -179,8 +187,52 @@ LOCALAI_API LocalAI_Status* LocalAI_Core_Shutdown(void);
 LOCALAI_API LocalAI_Status* LocalAI_Core_InitializeModel(Model_Type model, const char *model_path, 
                                                          Model_Params params);
 
-LOCALAI_API LocalAI_Status* LocalAI_Core_CreateSession(LocalAI_ChatSession** out_session);
-LOCALAI_API void LocalAI_Core_ReleaseSession(LocalAI_ChatSession* session);
+LOCALAI_API LocalAI_Status* LocalAI_Core_CreateChatSession(LocalAI_ChatSession** out_session);
+
+LOCALAI_API LocalAI_Status* LocalAI_ASR_Model_Create(const char* model_path,
+    Model_Params params, LocalAI_ASR_Model** out_model);
+
+LOCALAI_API void LocalAI_ASR_Model_Release(LocalAI_ASR_Model* model);
+
+LOCALAI_API LocalAI_Status* LocalAI_Text_Model_Create(const char* model_path,
+    Model_Params params, LocalAI_Text_Model** out_model);
+
+LOCALAI_API void LocalAI_Text_Model_Release(LocalAI_Text_Model *model);
+
+LOCALAI_API LocalAI_Status* LocalAI_Embedding_Model_Create(const char* model_path,
+    Model_Params params, LocalAI_Embedding_Model** out_model);
+
+LOCALAI_API void LocalAI_Embedding_Model_Release(LocalAI_Embedding_Model *model);
+
+LOCALAI_API LocalAI_Status* LocalAI_Vision_Model_Create(const char* model_path,
+    Model_Params params, LocalAI_Vision_Model** out_model);
+
+LOCALAI_API void LocalAI_Vision_Model_Release(LocalAI_Vision_Model* model);
+
+typedef enum {
+    ASR_STOPPED,
+    ASR_RUNNING,
+    ASR_PAUSED
+}ASRStatus;
+
+typedef struct {
+    void* user_data;
+    int sample_rate;
+    bool (*fill_buffer)(float* buffer, int buffer_size, int ms, void* user_data);
+    void (*on_heard)(const char* text, int len, void* user_data);
+    void (*on_status_changed)(ASRStatus status, void* user_data);
+    void (*on_error)(LocalAI_ErrorCode code, const char *error, void* user_data);
+}LocalAI_AudioProviderInfo;
+
+LOCALAI_API LocalAI_Status* LocalAI_ChatEnableASR(LocalAI_ChatSession* session,
+    LocalAI_AudioProviderInfo* audio_provider, LocalAI_ASR_Model *asr_model);
+
+LOCALAI_API void LocalAI_ChatDisableASR(LocalAI_ChatSession* session);
+LOCALAI_API void LocalAI_ChatResumeASR(LocalAI_ChatSession* session);
+LOCALAI_API void LocalAI_ChatPauseASR(LocalAI_ChatSession* session);
+LOCALAI_API void LocalAI_ChatStopASR(LocalAI_ChatSession* session);
+
+LOCALAI_API void LocalAI_Core_ReleaseChatSession(LocalAI_ChatSession* session);
 
 LOCALAI_API LocalAI_Status* LocalAI_Core_Update_TextModelParams(Model_Params params);
 LOCALAI_API LocalAI_Status* LocalAI_Core_Update_ASRModelParams(Model_Params params);

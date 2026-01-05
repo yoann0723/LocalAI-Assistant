@@ -5,10 +5,10 @@
 class IASRInferProvider;
 class ThreadPool;
 
-class IASRProvider final: public IModelProvider {
+class ASRProviderImpl final: public IASRProvider {
 public:
-	explicit IASRProvider(size_t n_thread = 1);
-	virtual ~IASRProvider() = default;
+	explicit ASRProviderImpl(size_t n_thread = 1);
+	virtual ~ASRProviderImpl() = default;
 
 	// Inherited via IModelProvider
 	const char* name() const override;
@@ -24,7 +24,7 @@ public:
 
 	void unInitialize() override;
 
-	Status transcribe(std::span<const float> samples, std::string &out);
+	Status transcribe(std::span<const float> samples, std::string &out) override;
 
 private:
 	std::unique_ptr<IASRInferProvider> engine_;

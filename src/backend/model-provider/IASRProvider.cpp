@@ -2,37 +2,45 @@
 #include "IInferenceProvider.h"
 #include "ThreadPool.h"
 
-IASRProvider::IASRProvider(size_t n_thread)
+ASRProviderImpl::ASRProviderImpl(size_t n_thread)
 	:engine_(std::move(InferenceFactory::createASRInfer())), 
 	pool_(std::make_unique<ThreadPool>(n_thread == 0 ? 1 : n_thread)) {
 }
 
-const char* IASRProvider::name() const
+const char* ASRProviderImpl::name() const
 {
 	return "asr_model";
 }
 
-ModelCapability IASRProvider::capability() const
+ModelCapability ASRProviderImpl::capability() const
 {
 	return ModelCapability::ASR;
 }
 
-Status IASRProvider::initialize(const char* model_path, const Model_Params& params)
+Status ASRProviderImpl::initialize(const char* model_path, const Model_Params& params)
+{
+	if(engine_)
+		return engine_->initialize(model_path, params);
+
+	return { LOCALAI_NOT_INITIALIZED, "Inference engine is not intialized." };
+}
+
+Status ASRProviderImpl::updateParams(const Model_Params& params)
 {
 	return {};
 }
 
-Status IASRProvider::updateParams(const Model_Params& params)
-{
-	return {};
-}
-
-void IASRProvider::unInitialize()
+void ASRProviderImpl::unInitialize()
 {
 }
 
-Status IASRProvider::transcribe(std::span<const float> samples, std::string &out)
+Status ASRProviderImpl::transcribe(std::span<const float> samples, std::string &out)
 {
+	if (!engine_) {
+		assert(false);
+		return { LOCALAI_NOT_INITIALIZED, "Inference engine is not intialized." };
+	}
+
 	if (samples.empty()) {
 		printf("Invalid audio sample input for ASR.\n");
 		return {
@@ -41,5 +49,5 @@ Status IASRProvider::transcribe(std::span<const float> samples, std::string &out
 		};
 	}
 
-	return {};
+	return engine_->transcribe(samples, out);
 }

@@ -15,10 +15,14 @@ std::unique_ptr<ILLMInferProvider> InferenceFactory::createLLMInfer()
 
 std::unique_ptr<IASRInferProvider> InferenceFactory::createASRInfer()
 {
-    return std::unique_ptr<WhisperASRProvider>();
+    auto infer = std::make_unique<WhisperASRProvider>();
+    fprintf(stderr, "%s: created provider: %p", __FUNCTION__, (void*)infer.get());
+    return infer;
 }
 
 std::unique_ptr<IVisionInferProvider> InferenceFactory::createVisionInfer()
 {
-    return std::unique_ptr<IVisionInferProvider>();
+    //return std::make_unique<IVisionInferProvider>();
+    //TODO: not implemented
+    return {};
 }

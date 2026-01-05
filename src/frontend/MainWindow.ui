@@ -17,6 +17,16 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
+      <widget class="QLabel" name="label_subtitle">
+       <property name="text">
+        <string>Subtitle</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QTextBrowser" name="textBrowser"/>
      </item>
      <item>
@@ -85,6 +95,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <property name="icon">
            <iconset theme="QIcon::ThemeIcon::DocumentSend"/>
+          </property>
+          <property name="shortcut">
+           <string>Return</string>
           </property>
          </widget>
         </item>

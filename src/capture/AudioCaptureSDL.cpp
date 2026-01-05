@@ -1,9 +1,13 @@
-#include "common.h"
 #include "IAudioCapture.h"
+#include "common.h"
+#include <assert.h>
 #include <SDL.h>
 #include <atomic>
 #include <mutex>
 #include <vector>
+
+constexpr const int default_channels = 1;
+constexpr const int default_samples = 1024;
 
 class AudioCaptureSDL :public Capture::audio::IAudioCapture {
 public:
@@ -15,7 +19,8 @@ public:
 	virtual void stop() override;
 	virtual bool isCapturing() const;
 	virtual void clearBuffer() override;
-	virtual size_t getAudioData(int ms, std::shared_ptr<float> &out) override;
+	virtual size_t getAudioData(float* buffer, int buffer_size, int ms) override;
+	virtual Capture::audio::AudioInfo getAudioInfo() override;
 
 	void audioCaptureCallback(Uint8* stream, int len);
 
@@ -43,10 +48,8 @@ AudioCaptureSDL::~AudioCaptureSDL() {
 
 bool AudioCaptureSDL::initialize(int sampleRate, int bufferLenMS, AudioCaptureCallbackFn callback)
 {
-	sampleRate_ = sampleRate;
 	audioCallback_ = callback;
-	if(bufferLenMS > 0)
-		bufferLenMS_ = bufferLenMS;
+	bufferLenMS_ = bufferLenMS > 0 ? bufferLenMS : MAX_AUDIO_CAPTURE_BUFFER_MS;
 
 	SDL_AudioSpec want;
 	SDL_AudioSpec have;
@@ -55,9 +58,9 @@ bool AudioCaptureSDL::initialize(int sampleRate, int bufferLenMS, AudioCaptureCa
 	SDL_zero(have);
 
 	want.freq = sampleRate;
-	want.channels = 1;
+	want.channels = default_channels;
 	want.format = AUDIO_F32;
-	want.samples = 1024;
+	want.samples = default_samples;
 	want.callback = [](void* userdata, uint8_t* stream, int len) {
 		AudioCaptureSDL* audio = (AudioCaptureSDL*)userdata;
 		audio->audioCaptureCallback(stream, len);
@@ -70,6 +73,9 @@ bool AudioCaptureSDL::initialize(int sampleRate, int bufferLenMS, AudioCaptureCa
 		deviceId_ = 0;
 		return false;
 	}
+
+	sampleRate_ = have.freq;
+	audioBuffer_.resize((sampleRate_ * bufferLenMS_) / 1000);
 
 	return true;
 }
@@ -144,7 +150,7 @@ void AudioCaptureSDL::clearBuffer()
 	}
 }
 
-size_t AudioCaptureSDL::getAudioData(int ms, std::shared_ptr<float>& out)
+size_t AudioCaptureSDL::getAudioData(float* buffer, int buffer_size, int ms)
 {
 	std::lock_guard<std::mutex> lock(mutex_);
 	if (ms <= 0)
@@ -159,19 +165,33 @@ size_t AudioCaptureSDL::getAudioData(int ms, std::shared_ptr<float>& out)
 		s0 += audioBuffer_.size();
 	}
 
-	out = std::shared_ptr<float>(new float[nSample], std::default_delete<float[]>());
+	if (nSample > buffer_size) {
+		assert(false);
+		fprintf(stderr, "buffer capacity is not sufficient.\n");
+		return 0;
+	}
+
+	//out = std::shared_ptr<float>(new float[nSample], std::default_delete<float[]>());
 	if (s0 + nSample > audioBuffer_.size()) {
 		// read in two parts
 		size_t n1 = audioBuffer_.size() - s0;
 		size_t n2 = nSample - n1;
-		memcpy(out.get(), &audioBuffer_[s0], n1 * sizeof(float));
-		memcpy(&out.get()[n1], &audioBuffer_[0], n2 * sizeof(float));
+		memcpy(buffer, &audioBuffer_[s0], n1 * sizeof(float));
+		memcpy(&(buffer[n1]), &audioBuffer_[0], n2 * sizeof(float));
 	}
 	else {
-		memcpy(out.get(), & audioBuffer_[s0], nSample * sizeof(float));
+		memcpy(buffer, &audioBuffer_[s0], nSample * sizeof(float));
 	}
 
 	return nSample;
+}
+
+Capture::audio::AudioInfo AudioCaptureSDL::getAudioInfo()
+{
+	Capture::audio::AudioInfo info{};
+	info.sample_rate = sampleRate_;
+	info.channels = default_channels;
+	return info;
 }
 
 void AudioCaptureSDL::audioCaptureCallback(Uint8* stream, int len)

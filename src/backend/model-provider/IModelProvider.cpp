@@ -12,11 +12,11 @@ std::unique_ptr<IModelProvider> ModelProviderFactory::createBuildInModel(
 {
 	switch (type) {
 	case BuildInModelType::LLM:
-		return std::make_unique<ILLMProvider>();
+		return std::make_unique<LLMProviderImpl>();
 	case BuildInModelType::Embedding:
 		return std::make_unique<IEmbeddingProvider>(n_thread);
 	case BuildInModelType::ASR:
-		return std::make_unique<IASRProvider>();
+		return std::make_unique<ASRProviderImpl>();
 	case BuildInModelType::Vision:
 		return std::make_unique<IVisionProvider>(n_thread);
 	default:
@@ -24,6 +24,16 @@ std::unique_ptr<IModelProvider> ModelProviderFactory::createBuildInModel(
 	}
 
     return nullptr;
+}
+
+std::unique_ptr<IASRProvider> ModelProviderFactory::createASRModel() 
+{
+	return std::make_unique<ASRProviderImpl>();
+}
+
+std::unique_ptr<ILLMProvider> ModelProviderFactory::createLLModel()
+{
+	return std::make_unique<LLMProviderImpl>();
 }
 
 std::unique_ptr<IModelProvider> ModelProviderFactory::createCustomModel( 

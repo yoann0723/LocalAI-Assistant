@@ -4,15 +4,14 @@
 #include <functional>
 #include <optional>
 
-using LLMCallback = std::function<void(const LLMOutput* result, const Status& status)>;
 class ILLMInferProvider;
 class ThreadPool;
 
-class ILLMProvider final : public IModelProvider {
+class LLMProviderImpl final : public ILLMProvider {
 public:
-	explicit ILLMProvider(size_t n_thread = 1);
+	explicit LLMProviderImpl(size_t n_thread = 1);
 
-	virtual ~ILLMProvider();
+	virtual ~LLMProviderImpl();
 
 	// Inherited via IModelProvider
 	const char* name() const override;
@@ -36,7 +35,7 @@ public:
 	void generateAsync(
 		std::string_view prompt, std::optional<std::string_view> params,
 		size_t max_len,
-		LLMCallback callback) const;
+		LLMCallback callback) const override;
 
 private:
 	std::unique_ptr<ILLMInferProvider> engine_;
