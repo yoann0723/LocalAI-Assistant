@@ -43,6 +43,16 @@ struct whisper_params {
     std::string prompt = "";
     std::string fname_out;
     std::string path_session = "";       // path to file for saving/loading model eval state
+
+    // Voice Activity Detection (VAD) parameters
+    bool        vad = false;
+    std::string vad_model = "";
+    float       vad_threshold = 0.5f;
+    int         vad_min_speech_duration_ms = 250;
+    int         vad_min_silence_duration_ms = 100;
+    float       vad_max_speech_duration_s = FLT_MAX;
+    int         vad_speech_pad_ms = 30;
+    float       vad_samples_overlap = 0.1f;
 };
 
 struct llama_model;
@@ -60,13 +70,15 @@ public:
     Status updateParams(
         const Model_Params& params) override;
 
+    bool vadSample(std::vector<float> &samples, int sample_rate, int last_ms) override;
+
     Status transcribe(
         std::span<const float> samples, 
         std::string& out) override;
 
 private:
-    struct whisper_context *ctx_wsp = nullptr;
-    whisper_params params;
+    struct whisper_context *ctx_wsp_ = nullptr;
+    whisper_params params_;
 
     // Typically single-thread or limited concurrency
     // You can plug your own ThreadPool here

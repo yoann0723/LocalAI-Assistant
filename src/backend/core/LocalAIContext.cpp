@@ -60,6 +60,9 @@ LocalAI_Status* LocalAI_Core_Initialize(LocalAI_Config config) {
 
 	Status status{};
 	std::call_once(g_context_flag, [&]() {
+
+		BackendInitializer::InitializeBackend();
+
 		g_context = std::make_unique<LocalAI_Context_t>(config);
 		if (!g_context) {
 			status.code = LocalAI_ErrorCode::LOCALAI_OOM;

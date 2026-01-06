@@ -52,19 +52,25 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-bool MainWindow::asrFillBuffer(float* buffer, int buffer_size, int ms)
+size_t MainWindow::asrFillBuffer(float* buffer, int buffer_size, int ms)
 {
-	if (audio_capture_) {
-		size_t sample = audio_capture_->getAudioData(buffer, buffer_size, ms);
-		if (0 == sample) {
-			fprintf(stderr, "No audio data retrieved.");
-            return false;
-		}
+    if (!audio_capture_)
+        return 0;
 
-        return true;
-	}
+    size_t sample = audio_capture_->getAudioData(buffer, buffer_size, ms);
+    if (0 == sample) {
+        fprintf(stderr, "No audio data retrieved.");
+        return 0;
+    }
 
-	return false;
+    return sample;
+}
+
+void MainWindow::asrClearAudio()
+{
+    if (audio_capture_) {
+        audio_capture_->clearBuffer();
+    }
 }
 
 void MainWindow::asrOnTranscribe(const char* text, int lens)
@@ -142,7 +148,8 @@ void MainWindow::on_btn_speech_clicked()
 {
     if (!audio_capture_) {
         auto audio_capture = Capture::audio::createAudioCapture();
-        if (!audio_capture->initialize(16000, 0, nullptr)) {
+        int buffer_Size = 0;
+        if (!audio_capture->initialize(16000, 0, buffer_Size, nullptr)) {
             assert(false);
             qDebug() << "Failed to initialize audio capture.";
             return;
@@ -151,13 +158,20 @@ void MainWindow::on_btn_speech_clicked()
         LocalAI_AudioProviderInfo audio_provider{0};
         audio_provider.sample_rate = audio_capture->getAudioInfo().sample_rate;
         audio_provider.user_data = this;
-        audio_provider.fill_buffer = [](float* buffer, int buffer_size, int ms, void* user_data) -> bool {
+        audio_provider.circle_buffer_size = buffer_Size;
+        audio_provider.fill_buffer = [](float* buffer, int buffer_size, int ms, void* user_data) -> size_t {
             auto window = static_cast<MainWindow*>(user_data);
             if (window) {
                 return window->asrFillBuffer(buffer, buffer_size, ms);
             }
 
-            return false;
+            return 0;
+        };
+        audio_provider.clear_audio = [](void* user_data) {
+            auto window = static_cast<MainWindow*>(user_data);
+            if (window) {
+                window->asrClearAudio();
+            }
         };
         audio_provider.on_heard = [](const char* text, int len, void* user_data) {
             auto window = static_cast<MainWindow*>(user_data);

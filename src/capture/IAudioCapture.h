@@ -41,7 +41,7 @@ namespace Capture::audio {
          * @date    $time$
          */
 
-		virtual bool initialize(int sampleRate, int bufferLenMS, AudioCaptureCallbackFn callback) = 0;
+		virtual bool initialize(int sampleRate, int bufferLenMS, int& outRealBufSize, AudioCaptureCallbackFn callback) = 0;
         
 
         /**

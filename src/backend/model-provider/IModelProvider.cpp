@@ -41,3 +41,8 @@ std::unique_ptr<IModelProvider> ModelProviderFactory::createCustomModel(
 {
     return std::make_unique<ICustomModelProvider>(n_thread);
 }
+
+void BackendInitializer::InitializeBackend()
+{
+	BackendLoader::loadBackend();
+}

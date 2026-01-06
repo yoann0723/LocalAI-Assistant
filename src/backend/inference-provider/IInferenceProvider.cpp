@@ -26,3 +26,11 @@ std::unique_ptr<IVisionInferProvider> InferenceFactory::createVisionInfer()
     //TODO: not implemented
     return {};
 }
+
+void BackendLoader::loadBackend()
+{
+    static bool initialized_ggml_back_end = []() {
+        ggml_backend_load_all();
+        return true;
+    }();
+}

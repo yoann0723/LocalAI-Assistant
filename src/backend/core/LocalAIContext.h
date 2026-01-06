@@ -49,16 +49,6 @@ struct LocalAI_ChatSession_t {
 	Status pauseASR();
 	Status stopAASR();
 
-	/*std::unique_ptr<AsyncPipeline> chat_pipeline_;
-
-	std::unique_ptr<ConversationManager> conv_;
-	std::unique_ptr<LLMEngine> llm_engine_;
-	std::unique_ptr<Orchestrator> orch_;
-	std::unique_ptr<RagRetriever> rag_;
-
-	std::weak_ptr<AIModelHub> model_hub_;
-	std::weak_ptr<PluginManager> pm_;*/
-
 	std::shared_ptr<ChatSessionImpl> impl_;
 };
 

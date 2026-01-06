@@ -20,11 +20,6 @@ Status LlamaInferenceProvider::initialize(
 	const char* model_path, 
 	const Model_Params& params)
 {
-	static bool initialized_ggml_back_end = []() {
-		ggml_backend_load_all();
-		return true;
-	}();
-
 	if (!model_path)
 	{
 		fprintf(stderr, "%s: error: model_path is null.\n", __func__);
@@ -162,8 +157,6 @@ Status LlamaInferenceProvider::generate(std::string_view user, LLMOutput** outpu
 		}
 
 		// convert the token to a string, print it and add it to the response
-		// char buf[256];
-		//int n = llama_token_to_piece(vocab, new_token_id, buf, sizeof(buf), 0, true);
 		int n = llama_token_to_piece(vocab, new_token_id, 
 			response->text.data() + response->piece_count, 
 			response->text.size() - response->piece_count, 0, true);
@@ -185,19 +178,15 @@ Status LlamaInferenceProvider::generate(std::string_view user, LLMOutput** outpu
 		else {
 			response->text.resize(response->piece_count + n);
 		}
-		// std::string piece(buf, n);
-#ifdef _DEBUG
-		printf("%s", piece.c_str());
-		fflush(stdout);
-#endif
-		// response += piece;
+
 		response->piece_count += n;
 
 		// prepare the next batch with the sampled token
 		batch = llama_batch_get_one(&new_token_id, 1);
-
+#ifdef _DEBUG
 		fprintf(stderr, "%s", response->text.c_str());
 		fflush(stderr);
+#endif
 	}
 
 	response->text.resize(response->piece_count + 1);

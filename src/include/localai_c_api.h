@@ -117,6 +117,9 @@ typedef struct {
     int quantize;
     int n_layer;
     int n_embd;
+
+    bool use_gpu;
+    bool flash_attn;
 }Model_Params;
 
 typedef bool (*LocalAI_ModelInfoCallback)(Model_Type type, void* user_data);
@@ -218,7 +221,10 @@ typedef enum {
 typedef struct {
     void* user_data;
     int sample_rate;
-    bool (*fill_buffer)(float* buffer, int buffer_size, int ms, void* user_data);
+    int circle_buffer_size;
+    size_t (*fill_buffer)(float* buffer, int buffer_size, int ms, void* user_data);
+    void (*clear_audio)(void* user_data);
+
     void (*on_heard)(const char* text, int len, void* user_data);
     void (*on_status_changed)(ASRStatus status, void* user_data);
     void (*on_error)(LocalAI_ErrorCode code, const char *error, void* user_data);

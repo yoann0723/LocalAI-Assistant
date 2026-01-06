@@ -13,7 +13,7 @@ class AudioCaptureSDL :public Capture::audio::IAudioCapture {
 public:
 	AudioCaptureSDL();
 	~AudioCaptureSDL() override;
-	virtual bool initialize(int sampleRate, int bufferLenMS, AudioCaptureCallbackFn callback) override;
+	virtual bool initialize(int sampleRate, int bufferLenMS, int& outBufSize, AudioCaptureCallbackFn callback) override;
 	virtual bool resume() override;
 	virtual bool pause() override;
 	virtual void stop() override;
@@ -46,11 +46,8 @@ AudioCaptureSDL::~AudioCaptureSDL() {
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
-bool AudioCaptureSDL::initialize(int sampleRate, int bufferLenMS, AudioCaptureCallbackFn callback)
+bool AudioCaptureSDL::initialize(int sampleRate, int bufferLenMS, int& outBufSize, AudioCaptureCallbackFn callback)
 {
-	audioCallback_ = callback;
-	bufferLenMS_ = bufferLenMS > 0 ? bufferLenMS : MAX_AUDIO_CAPTURE_BUFFER_MS;
-
 	SDL_AudioSpec want;
 	SDL_AudioSpec have;
 
@@ -74,8 +71,13 @@ bool AudioCaptureSDL::initialize(int sampleRate, int bufferLenMS, AudioCaptureCa
 		return false;
 	}
 
+	audioCallback_ = callback;
+	bufferLenMS_ = bufferLenMS > 0 ? bufferLenMS : MAX_AUDIO_CAPTURE_BUFFER_MS;
+
 	sampleRate_ = have.freq;
 	audioBuffer_.resize((sampleRate_ * bufferLenMS_) / 1000);
+
+	outBufSize = audioBuffer_.size();
 
 	return true;
 }

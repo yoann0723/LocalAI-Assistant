@@ -1,4 +1,8 @@
 #include "ASREngine.h"
+#include <algorithm>
+
+constexpr const int vad_sample_ms_default = 2000;
+constexpr const int voice_sample_ms_default = 10000;
 
 ASREngine::ASREngine(IASRProvider* asr_provider,
 	LocalAI_AudioProviderInfo* provider)
@@ -33,15 +37,11 @@ void ASREngine::stop()
 void ASREngine::asrLoop()
 {
 	std::string heard;
-	int desire_ms = 2000;
-	const size_t nSample = (audio_provider_.sample_rate * desire_ms) / 1000;
 
 	if (!audio_provider_.fill_buffer) {
 		fprintf(stderr, "No fill buffer function specified for audio provider.\n");
 		return;
 	}
-
-	data_.resize(nSample);
 
 	fprintf(stderr, "thread: `%s` started.\n", __FUNCTION__);
 
@@ -65,8 +65,12 @@ void ASREngine::asrLoop()
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-		bool fill_ok = audio_provider_.fill_buffer(data_.data(), data_.size(), desire_ms, audio_provider_.user_data);
-		if (!fill_ok) {
+		const size_t vad_sample_size = (audio_provider_.sample_rate * vad_sample_ms_default) / 1000;
+		data_.clear();
+		data_.resize(vad_sample_size);
+
+		auto available_size = audio_provider_.fill_buffer(data_.data(), data_.size(), vad_sample_ms_default, audio_provider_.user_data);
+		if (0 == available_size) {
 #ifdef _DEBUG
 			fprintf(stderr, "Failed to fill buffer.\n");
 #endif
@@ -76,8 +80,40 @@ void ASREngine::asrLoop()
 			continue;
 		}
 
+		if(vad_sample_size > available_size)
+			data_.resize(available_size);
+		// detect audio activity
+		if (!asr_provider_->vadSample(data_, audio_provider_.sample_rate, 1250)) {
+			continue;
+		}
+
+		// inference
+		int voice_sample_size = (audio_provider_.sample_rate * voice_sample_ms_default) / 1000;
+		voice_sample_size = std::min(static_cast<int>(voice_sample_size), audio_provider_.circle_buffer_size);
+		data_.clear();
+		data_.resize(voice_sample_size);
+
+		available_size = audio_provider_.fill_buffer(data_.data(), data_.size(),
+			voice_sample_ms_default, audio_provider_.user_data);
+
+		if (0 == available_size) {
+			if (audio_provider_.on_error)
+				audio_provider_.on_error(LOCALAI_RUNTIME_ERROR,
+					"Failed to fill audio buffer.", audio_provider_.user_data);
+			continue;
+		}
+
+		if (voice_sample_size > available_size)
+			data_.resize(available_size);
+
 		auto status = asr_provider_->transcribe(data_, heard);
 		if (status) {
+
+			if (heard.empty()) {
+				audio_provider_.clear_audio(audio_provider_.user_data);
+				continue;
+			}
+
 			if (audio_provider_.on_heard)
 				audio_provider_.on_heard(heard.c_str(), heard.size(), audio_provider_.user_data);
 		}else {
@@ -91,6 +127,8 @@ void ASREngine::asrLoop()
 			if (audio_provider_.on_status_changed)
 				audio_provider_.on_status_changed(ASR_PAUSED, audio_provider_.user_data);
 		}
+
+		audio_provider_.clear_audio(audio_provider_.user_data);
 	}
 
 	if (audio_provider_.on_status_changed)

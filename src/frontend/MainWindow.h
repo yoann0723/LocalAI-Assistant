@@ -17,7 +17,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    bool asrFillBuffer(float* buffer, int buffer_size, int ms);
+    size_t asrFillBuffer(float* buffer, int buffer_size, int ms);
+    void asrClearAudio();
     void asrOnTranscribe(const char *text, int lens);
     void asrStatusChanged(ASRStatus status);
     void asrError(LocalAI_ErrorCode code, const char *msg);

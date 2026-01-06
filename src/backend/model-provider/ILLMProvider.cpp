@@ -5,7 +5,7 @@
 
 LLMProviderImpl::LLMProviderImpl(size_t n_thread)
 	:engine_(std::move(InferenceFactory::createLLMInfer())),
-	pool_(std::make_unique<ThreadPool>(n_thread == 0 ? 1 : n_thread).release())
+	pool_(std::make_unique<ThreadPool>(n_thread == 0 ? 1 : n_thread, "llm_thread"))
 {
 }
 

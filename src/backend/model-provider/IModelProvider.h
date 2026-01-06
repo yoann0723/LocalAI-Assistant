@@ -56,6 +56,7 @@ public:
 
 class IASRProvider : public IModelProvider {
 public:
+	virtual bool vadSample(std::vector<float> &samples, int sample_rate, int last_ms) = 0;
 	virtual Status transcribe(std::span<const float> samples, std::string& out) = 0;
 };
 
@@ -78,4 +79,9 @@ public:
 
 	static std::unique_ptr<IModelProvider> createCustomModel(
 		InferenceType infernce_type, size_t n_thread = 0);
+};
+
+class BackendInitializer {
+public:
+	static void InitializeBackend();
 };

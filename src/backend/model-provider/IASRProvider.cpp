@@ -3,8 +3,8 @@
 #include "ThreadPool.h"
 
 ASRProviderImpl::ASRProviderImpl(size_t n_thread)
-	:engine_(std::move(InferenceFactory::createASRInfer())), 
-	pool_(std::make_unique<ThreadPool>(n_thread == 0 ? 1 : n_thread)) {
+	:engine_(std::move(InferenceFactory::createASRInfer()))/*, 
+	pool_(std::make_unique<ThreadPool>(n_thread == 0 ? 1 : n_thread)) */{
 }
 
 const char* ASRProviderImpl::name() const
@@ -32,6 +32,11 @@ Status ASRProviderImpl::updateParams(const Model_Params& params)
 
 void ASRProviderImpl::unInitialize()
 {
+}
+
+bool ASRProviderImpl::vadSample(std::vector<float> &samples, int sample_rate, int last_ms)
+{
+	return engine_->vadSample(samples, sample_rate, last_ms);
 }
 
 Status ASRProviderImpl::transcribe(std::span<const float> samples, std::string &out)

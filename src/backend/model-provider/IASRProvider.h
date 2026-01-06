@@ -3,7 +3,7 @@
 #include "IModelProvider.h"
 
 class IASRInferProvider;
-class ThreadPool;
+//class ThreadPool;
 
 class ASRProviderImpl final: public IASRProvider {
 public:
@@ -24,9 +24,11 @@ public:
 
 	void unInitialize() override;
 
+	bool vadSample(std::vector<float> &samples, int sample_rate, int last_ms) override;
+
 	Status transcribe(std::span<const float> samples, std::string &out) override;
 
 private:
 	std::unique_ptr<IASRInferProvider> engine_;
-	std::unique_ptr<ThreadPool> pool_;
+	//std::unique_ptr<ThreadPool> pool_;
 };

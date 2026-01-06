@@ -70,6 +70,8 @@ public:
     virtual Status updateParams(
         const Model_Params& params) = 0;
 
+    virtual bool vadSample(std::vector<float> &samples, int sample_rate, int last_ms) = 0;
+
     virtual Status transcribe(
         std::span<const float> samples, std::string& out) = 0;
 };
@@ -97,4 +99,9 @@ public:
     static std::unique_ptr<ILLMInferProvider> createLLMInfer();
     static std::unique_ptr<IASRInferProvider> createASRInfer();
     static std::unique_ptr<IVisionInferProvider> createVisionInfer();
+};
+
+class BackendLoader {
+public:
+    static void loadBackend();
 };
